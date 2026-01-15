@@ -1,0 +1,12 @@
+{
+  "name": "estimate-app",
+  "version": "1.0.0",
+  "description": "見積書作成アプリ",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build step needed'"
+  },
+  "dependencies": {
+    "@notionhq/client": "^2.2.14"
+  }
+}
