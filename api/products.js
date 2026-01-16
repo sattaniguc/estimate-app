@@ -30,8 +30,8 @@ module.exports = async (req, res) => {
         id: page.id,
         name: props['商品名']?.title?.[0]?.text?.content || '商品名なし',
         category: props['カテゴリ']?.select?.name || 'その他',
-        priceWholesale: props['納品価格(帳合)']?.number || 0,
-        priceDirect: props['納品価格(直接)']?.number || 0,
+        priceWholesale: props['納品価格（帳合）']?.number || 0,
+        priceDirect: props['納品価格（直接）']?.number || 0,
         taxRate: props['消費税率']?.select?.name || '10%'
       };
     });
