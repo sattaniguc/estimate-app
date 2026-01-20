@@ -61,6 +61,9 @@
           });
           const data = await response.json();
           if (!response.ok) throw new Error(data.error || 'データ取得に失敗');
+          
+          console.log('取得した商品データ（最初の3件）:', data.products.slice(0, 3));
+          
           setProducts(data.products);
           setLoading(false);
         } catch (err) {
@@ -74,17 +77,25 @@
         const newItems = { ...estimateData.items };
         const beerProducts = products.filter(p => p.category === 'ビール' && p.priceWholesale > 0);
         
+        console.log(`ビール商品数: ${beerProducts.length}, 選択: ${type}`);
+        
         beerProducts.forEach(product => {
+          const hasContainer = product.containerType === '瓶' || product.containerType === '缶';
+          if (!hasContainer) {
+            console.log(`容器タイプなし: ${product.name}`);
+          }
+          
           if (type === '瓶のみ' && product.containerType === '瓶') {
             newItems[product.id] = 24;
           } else if (type === '缶のみ' && product.containerType === '缶') {
             newItems[product.id] = 24;
-          } else if (type === '瓶+缶' && (product.containerType === '瓶' || product.containerType === '缶')) {
+          } else if (type === '瓶+缶' && hasContainer) {
             newItems[product.id] = 24;
           } else if (beerProducts.some(p => p.id === product.id)) {
             delete newItems[product.id];
           }
         });
+        
         setEstimateData(prev => ({ ...prev, items: newItems }));
       };
 
@@ -93,25 +104,45 @@
         const newItems = { ...estimateData.items };
         const sausageProducts = products.filter(p => p.category === 'ソーセージ' && p.priceWholesale > 0);
         
+        console.log(`ソーセージ商品数: ${sausageProducts.length}, 選択: ${type}`);
+        sausageProducts.slice(0, 3).forEach(p => {
+          console.log(`商品: ${p.name}, 保存方法: "${p.storageMethod}"`);
+        });
+        
         sausageProducts.forEach(product => {
+          const hasStorage = product.storageMethod === '冷蔵' || product.storageMethod === '冷凍';
+          if (!hasStorage) {
+            console.log(`保存方法なし: ${product.name}`);
+          }
+          
           if (type === '冷蔵のみ' && product.storageMethod === '冷蔵') {
             newItems[product.id] = 20;
           } else if (type === '冷凍のみ' && product.storageMethod === '冷凍') {
             newItems[product.id] = 20;
-          } else if (type === '冷蔵+冷凍' && (product.storageMethod === '冷蔵' || product.storageMethod === '冷凍')) {
+          } else if (type === '冷蔵+冷凍' && hasStorage) {
             newItems[product.id] = 20;
           } else if (sausageProducts.some(p => p.id === product.id)) {
             delete newItems[product.id];
           }
         });
+        
         setEstimateData(prev => ({ ...prev, items: newItems }));
       };
 
       const handleQuantityChange = (productId, quantity) => {
-        setEstimateData(prev => ({
-          ...prev,
-          items: { ...prev.items, [productId]: Math.max(0, quantity) }
-        }));
+        const newItems = { ...estimateData.items };
+        if (quantity <= 0) {
+          delete newItems[productId];
+        } else {
+          newItems[productId] = quantity;
+        }
+        setEstimateData(prev => ({ ...prev, items: newItems }));
+      };
+
+      const removeItem = (productId) => {
+        const newItems = { ...estimateData.items };
+        delete newItems[productId];
+        setEstimateData(prev => ({ ...prev, items: newItems }));
       };
 
       const getPrice = (product) => {
@@ -210,7 +241,6 @@
                 <div className="mb-8">
                   <p className="text-lg">{estimateData.customerName} 御中</p>
                   <p className="text-right text-sm mt-4">株式会社丹後王国ブルワリー</p>
-                  <p className="text-right text-sm">取引形態: {estimateData.tradeType}</p>
                 </div>
 
                 <table className="w-full border-collapse border border-gray-300 mb-8">
@@ -315,63 +345,65 @@
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
               <h2 className="text-xl font-bold mb-4">商品セット選択</h2>
               
-              <div className="mb-6">
-                <h3 className="font-medium mb-3">ビール（基本数量：24）</h3>
-                <div className="flex gap-3">
-                  <button
-                    className={`px-6 py-3 rounded-lg font-medium ${
-                      beerSelection === '瓶のみ' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
-                    }`}
-                    onClick={() => handleBeerSetSelection('瓶のみ')}
-                  >
-                    瓶のみ
-                  </button>
-                  <button
-                    className={`px-6 py-3 rounded-lg font-medium ${
-                      beerSelection === '缶のみ' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
-                    }`}
-                    onClick={() => handleBeerSetSelection('缶のみ')}
-                  >
-                    缶のみ
-                  </button>
-                  <button
-                    className={`px-6 py-3 rounded-lg font-medium ${
-                      beerSelection === '瓶+缶' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
-                    }`}
-                    onClick={() => handleBeerSetSelection('瓶+缶')}
-                  >
-                    瓶+缶
-                  </button>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="font-medium mb-3">ビール（基本数量：24）</h3>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      className={`px-6 py-3 rounded-lg font-medium ${
+                        beerSelection === '瓶のみ' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                      }`}
+                      onClick={() => handleBeerSetSelection('瓶のみ')}
+                    >
+                      瓶のみ
+                    </button>
+                    <button
+                      className={`px-6 py-3 rounded-lg font-medium ${
+                        beerSelection === '缶のみ' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                      }`}
+                      onClick={() => handleBeerSetSelection('缶のみ')}
+                    >
+                      缶のみ
+                    </button>
+                    <button
+                      className={`px-6 py-3 rounded-lg font-medium ${
+                        beerSelection === '瓶+缶' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                      }`}
+                      onClick={() => handleBeerSetSelection('瓶+缶')}
+                    >
+                      瓶+缶
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <h3 className="font-medium mb-3">ソーセージ（基本数量：20）</h3>
-                <div className="flex gap-3">
-                  <button
-                    className={`px-6 py-3 rounded-lg font-medium ${
-                      sausageSelection === '冷蔵のみ' ? 'bg-green-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
-                    }`}
-                    onClick={() => handleSausageSetSelection('冷蔵のみ')}
-                  >
-                    冷蔵のみ
-                  </button>
-                  <button
-                    className={`px-6 py-3 rounded-lg font-medium ${
-                      sausageSelection === '冷凍のみ' ? 'bg-green-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
-                    }`}
-                    onClick={() => handleSausageSetSelection('冷凍のみ')}
-                  >
-                    冷凍のみ
-                  </button>
-                  <button
-                    className={`px-6 py-3 rounded-lg font-medium ${
-                      sausageSelection === '冷蔵+冷凍' ? 'bg-green-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
-                    }`}
-                    onClick={() => handleSausageSetSelection('冷蔵+冷凍')}
-                  >
-                    冷蔵+冷凍
-                  </button>
+                <div>
+                  <h3 className="font-medium mb-3">ソーセージ（基本数量：20）</h3>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      className={`px-6 py-3 rounded-lg font-medium ${
+                        sausageSelection === '冷蔵のみ' ? 'bg-green-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                      }`}
+                      onClick={() => handleSausageSetSelection('冷蔵のみ')}
+                    >
+                      冷蔵のみ
+                    </button>
+                    <button
+                      className={`px-6 py-3 rounded-lg font-medium ${
+                        sausageSelection === '冷凍のみ' ? 'bg-green-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                      }`}
+                      onClick={() => handleSausageSetSelection('冷凍のみ')}
+                    >
+                      冷凍のみ
+                    </button>
+                    <button
+                      className={`px-6 py-3 rounded-lg font-medium ${
+                        sausageSelection === '冷蔵+冷凍' ? 'bg-green-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                      }`}
+                      onClick={() => handleSausageSetSelection('冷蔵+冷凍')}
+                    >
+                      冷蔵+冷凍
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -398,6 +430,13 @@
                           <div className="w-32 text-right font-medium">
                             ¥{(quantity * getPrice(product)).toLocaleString()}
                           </div>
+                          <button
+                            className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
+                            onClick={() => removeItem(product.id)}
+                            title="削除"
+                          >
+                            ✕
+                          </button>
                         </div>
                       </div>
                     ))}
