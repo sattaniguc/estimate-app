@@ -7,9 +7,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @media print {
-      .print\:hidden {
-        display: none !important;
-      }
+      .print\:hidden { display: none !important; }
+      body { background: white; }
     }
   </style>
 </head>
@@ -23,53 +22,45 @@
   <script type="text/babel">
     const { useState, useEffect } = React;
 
-    const API_BASE = ''; // 同じドメインなので空文字
-
     function EstimateApp() {
       const [products, setProducts] = useState([]);
-      const [loading, setLoading] = useState(false);
+      const [loading, setLoading] = useState(true);
       const [saving, setSaving] = useState(false);
       const [saved, setSaved] = useState(false);
       const [error, setError] = useState(null);
-      const [selectedTab, setSelectedTab] = useState('ビール');
+      const [showPreview, setShowPreview] = useState(false);
+      
       const [notionConfig] = useState({
         caseDbId: '2e7c631c2f0580ccb614cb9c82fbee44',
         detailDbId: '2e7c631c2f05808f9b56d965daef739e',
         productDbId: '2d2c631c2f0580f9811de2f2eed22baf'
-    });
+      });
+      
+      const [estimateData, setEstimateData] = useState({
+        customerName: '',
+        tradeType: '帳合',
+        showRetailPrice: false,
+        items: {}
+      });
+
+      const [beerSelection, setBeerSelection] = useState('');
+      const [sausageSelection, setSausageSelection] = useState('');
 
       useEffect(() => {
         fetchProducts();
       }, []);
 
-      const [estimateData, setEstimateData] = useState({
-        customerName: '',
-        tradeType: '帳合',
-        items: {}
-      });
-
-      const categories = ['ビール', 'ソーセージ', 'その他'];
-
       const fetchProducts = async () => {
         setLoading(true);
         setError(null);
-
         try {
           const response = await fetch('/api/products', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            productDbId: notionConfig.productDbId
-            // tokenは送信しない（サーバー側で環境変数から取得）
-          })
-        });
-    
-        const data = await response.json();
-      
-          if (!response.ok) {
-            throw new Error(data.error || 'データ取得に失敗しました');
-          }
-
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productDbId: notionConfig.productDbId })
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || 'データ取得に失敗');
           setProducts(data.products);
           setLoading(false);
         } catch (err) {
@@ -78,76 +69,48 @@
         }
       };
 
-      const saveToNotion = async () => {
-        if (!estimateData.customerName) {
-          alert('顧客名を入力してください');
-          return;
-        }
-
-        const selectedItems = Object.entries(estimateData.items)
-          .filter(([_, qty]) => qty > 0)
-          .map(([productId, quantity]) => {
-            const product = products.find(p => p.id === productId);
-            return {
-              productId,
-              productName: product.name,
-              quantity
-            };
-          });
-
-        if (selectedItems.length === 0) {
-          alert('商品を選択してください');
-          return;
-        }
-
-        setSaving(true);
-        setError(null);
-
-        try {
-          const response = await fetch('/api/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              // tokenは送信しない
-              caseDbId: notionConfig.caseDbId,
-              detailDbId: notionConfig.detailDbId,
-              customerName: estimateData.customerName,
-              tradeType: estimateData.tradeType,
-              items: selectedItems
-            })
-          });
-
-          const data = await response.json();
-
-          if (!response.ok) {
-            throw new Error(data.error || '保存に失敗しました');
+      const handleBeerSetSelection = (type) => {
+        setBeerSelection(type);
+        const newItems = { ...estimateData.items };
+        const beerProducts = products.filter(p => p.category === 'ビール' && p.priceWholesale > 0);
+        
+        beerProducts.forEach(product => {
+          if (type === '瓶のみ' && product.containerType === '瓶') {
+            newItems[product.id] = 24;
+          } else if (type === '缶のみ' && product.containerType === '缶') {
+            newItems[product.id] = 24;
+          } else if (type === '瓶+缶' && (product.containerType === '瓶' || product.containerType === '缶')) {
+            newItems[product.id] = 24;
+          } else if (beerProducts.some(p => p.id === product.id)) {
+            delete newItems[product.id];
           }
+        });
+        setEstimateData(prev => ({ ...prev, items: newItems }));
+      };
 
-          setSaving(false);
-          setSaved(true);
-
-          setTimeout(() => {
-            setSaved(false);
-            setEstimateData({
-              customerName: '',
-              tradeType: '帳合',
-              items: {}
-            });
-          }, 3000);
-
-        } catch (err) {
-          setError(`保存に失敗: ${err.message}`);
-          setSaving(false);
-        }
+      const handleSausageSetSelection = (type) => {
+        setSausageSelection(type);
+        const newItems = { ...estimateData.items };
+        const sausageProducts = products.filter(p => p.category === 'ソーセージ' && p.priceWholesale > 0);
+        
+        sausageProducts.forEach(product => {
+          if (type === '冷蔵のみ' && product.storageMethod === '冷蔵') {
+            newItems[product.id] = 20;
+          } else if (type === '冷凍のみ' && product.storageMethod === '冷凍') {
+            newItems[product.id] = 20;
+          } else if (type === '冷蔵+冷凍' && (product.storageMethod === '冷蔵' || product.storageMethod === '冷凍')) {
+            newItems[product.id] = 20;
+          } else if (sausageProducts.some(p => p.id === product.id)) {
+            delete newItems[product.id];
+          }
+        });
+        setEstimateData(prev => ({ ...prev, items: newItems }));
       };
 
       const handleQuantityChange = (productId, quantity) => {
         setEstimateData(prev => ({
           ...prev,
-          items: {
-            ...prev.items,
-            [productId]: Math.max(0, quantity)
-          }
+          items: { ...prev.items, [productId]: Math.max(0, quantity) }
         }));
       };
 
@@ -156,41 +119,154 @@
       };
 
       const calculateTotals = () => {
-        let subtotal = 0;
-        let tax = 0;
-
+        let subtotal = 0, tax = 0;
         Object.entries(estimateData.items).forEach(([productId, quantity]) => {
           if (quantity > 0) {
             const product = products.find(p => p.id === productId);
             if (product) {
               const price = getPrice(product);
               const itemSubtotal = price * quantity;
-              const taxRate = product.taxRate === '10%' ? 0.1 : 0.08;
+              const taxRate = product.taxRate === '10%' || product.taxRate === '10％' ? 0.1 : 0.08;
               subtotal += itemSubtotal;
               tax += Math.round(itemSubtotal * taxRate);
             }
           }
         });
-
         return { subtotal, tax, total: subtotal + tax };
       };
 
+      const saveToNotion = async () => {
+        if (!estimateData.customerName) return alert('顧客名を入力してください');
+        const selectedItems = Object.entries(estimateData.items)
+          .filter(([_, qty]) => qty > 0)
+          .map(([productId, quantity]) => ({
+            productId,
+            productName: products.find(p => p.id === productId).name,
+            quantity
+          }));
+        if (selectedItems.length === 0) return alert('商品を選択してください');
+
+        setSaving(true);
+        setError(null);
+        try {
+          const response = await fetch('/api/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              caseDbId: notionConfig.caseDbId,
+              detailDbId: notionConfig.detailDbId,
+              customerName: estimateData.customerName,
+              tradeType: estimateData.tradeType,
+              items: selectedItems
+            })
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || '保存に失敗');
+          setSaving(false);
+          setSaved(true);
+          setTimeout(() => setSaved(false), 3000);
+        } catch (err) {
+          setError(`保存に失敗: ${err.message}`);
+          setSaving(false);
+        }
+      };
+
       const totals = calculateTotals();
-      const filteredProducts = products.filter(p => p.category === selectedTab);
+      const selectedProducts = Object.entries(estimateData.items)
+        .filter(([_, qty]) => qty > 0)
+        .map(([productId, quantity]) => ({
+          product: products.find(p => p.id === productId),
+          quantity
+        }))
+        .filter(item => item.product);
+
+      if (loading) {
+        return (
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-blue-600">読み込み中...</div>
+          </div>
+        );
+      }
+
+      if (showPreview) {
+        return (
+          <div className="min-h-screen bg-white p-8">
+            <div className="max-w-4xl mx-auto">
+              <button
+                className="mb-4 px-4 py-2 bg-gray-600 text-white rounded-lg print:hidden"
+                onClick={() => setShowPreview(false)}
+              >
+                ← 編集に戻る
+              </button>
+              <button
+                className="mb-4 ml-2 px-4 py-2 bg-blue-600 text-white rounded-lg print:hidden"
+                onClick={() => window.print()}
+              >
+                🖨 印刷/PDF保存
+              </button>
+
+              <div className="bg-white border-2 border-gray-300 p-8">
+                <h1 className="text-3xl font-bold text-center mb-8">御見積書</h1>
+                <div className="mb-8">
+                  <p className="text-lg">{estimateData.customerName} 御中</p>
+                  <p className="text-right text-sm mt-4">株式会社丹後王国ブルワリー</p>
+                  <p className="text-right text-sm">取引形態: {estimateData.tradeType}</p>
+                </div>
+
+                <table className="w-full border-collapse border border-gray-300 mb-8">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="border border-gray-300 px-2 py-2 text-left text-sm">商品名</th>
+                      <th className="border border-gray-300 px-2 py-2 text-center text-sm">数量</th>
+                      <th className="border border-gray-300 px-2 py-2 text-right text-sm">単価</th>
+                      <th className="border border-gray-300 px-2 py-2 text-right text-sm">小計</th>
+                      <th className="border border-gray-300 px-2 py-2 text-left text-sm">賞味期限</th>
+                      <th className="border border-gray-300 px-2 py-2 text-left text-sm">JANコード</th>
+                      {estimateData.showRetailPrice && (
+                        <th className="border border-gray-300 px-2 py-2 text-right text-sm">希望小売価格</th>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedProducts.map(({ product, quantity }) => (
+                      <tr key={product.id}>
+                        <td className="border border-gray-300 px-2 py-2 text-sm">{product.name}</td>
+                        <td className="border border-gray-300 px-2 py-2 text-center text-sm">{quantity}</td>
+                        <td className="border border-gray-300 px-2 py-2 text-right text-sm">¥{getPrice(product).toLocaleString()}</td>
+                        <td className="border border-gray-300 px-2 py-2 text-right text-sm">¥{(getPrice(product) * quantity).toLocaleString()}</td>
+                        <td className="border border-gray-300 px-2 py-2 text-sm">{product.expiryDate}</td>
+                        <td className="border border-gray-300 px-2 py-2 text-sm">{product.janCode}</td>
+                        {estimateData.showRetailPrice && (
+                          <td className="border border-gray-300 px-2 py-2 text-right text-sm">
+                            {product.retailPrice > 0 ? `¥${product.retailPrice.toLocaleString()}` : '-'}
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                <div className="text-right space-y-2">
+                  <div className="text-lg">小計（税抜）: ¥{totals.subtotal.toLocaleString()}</div>
+                  <div className="text-lg">消費税: ¥{totals.tax.toLocaleString()}</div>
+                  <div className="text-2xl font-bold border-t-2 border-gray-300 pt-2">
+                    合計金額: ¥{totals.total.toLocaleString()}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
 
       return (
         <div className="min-h-screen bg-gray-50 p-4">
           <div className="max-w-6xl mx-auto">
-            {/* ヘッダー */}
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-800 mb-2">見積書作成</h1>
-                <p className="text-gray-600">株式会社丹後王国ブルワリー</p>
-              </div>
-              {/* 設定ボタンを削除 */}
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">見積書作成</h1>
+              <p className="text-gray-600">株式会社丹後王国ブルワリー</p>
             </div>
 
-            {/* エラーメッセージ */}
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
                 <p className="text-red-800 font-medium">エラー</p>
@@ -198,82 +274,129 @@
               </div>
             )}
 
-            {/* 商品未取得の案内 */}
-            {products.length === 0 && !loading && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6 text-center">
-                <p className="text-blue-800 font-medium mb-2">商品データを取得してください</p>
-                <p className="text-blue-700 text-sm">
-                  上部の「設定」ボタンからNotion Tokenを入力し、<br />
-                  「商品データを取得」ボタンをクリックしてください。
-                </p>
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+              <h2 className="text-xl font-bold mb-4">基本情報</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">顧客名 *</label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-2 border rounded-lg"
+                    placeholder="株式会社〇〇"
+                    value={estimateData.customerName}
+                    onChange={(e) => setEstimateData(prev => ({ ...prev, customerName: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">取引形態 *</label>
+                  <select
+                    className="w-full px-4 py-2 border rounded-lg"
+                    value={estimateData.tradeType}
+                    onChange={(e) => setEstimateData(prev => ({ ...prev, tradeType: e.target.value }))}
+                  >
+                    <option value="帳合">帳合</option>
+                    <option value="直接">直接</option>
+                  </select>
+                </div>
+                <div className="flex items-end">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={estimateData.showRetailPrice}
+                      onChange={(e) => setEstimateData(prev => ({ ...prev, showRetailPrice: e.target.checked }))}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm">希望小売価格を表示</span>
+                  </label>
+                </div>
               </div>
-            )}
+            </div>
 
-            {/* 基本情報・商品選択・保存ボタン */}
-            {products.length > 0 && (
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+              <h2 className="text-xl font-bold mb-4">商品セット選択</h2>
+              
+              <div className="mb-6">
+                <h3 className="font-medium mb-3">ビール（基本数量：24）</h3>
+                <div className="flex gap-3">
+                  <button
+                    className={`px-6 py-3 rounded-lg font-medium ${
+                      beerSelection === '瓶のみ' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                    }`}
+                    onClick={() => handleBeerSetSelection('瓶のみ')}
+                  >
+                    瓶のみ
+                  </button>
+                  <button
+                    className={`px-6 py-3 rounded-lg font-medium ${
+                      beerSelection === '缶のみ' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                    }`}
+                    onClick={() => handleBeerSetSelection('缶のみ')}
+                  >
+                    缶のみ
+                  </button>
+                  <button
+                    className={`px-6 py-3 rounded-lg font-medium ${
+                      beerSelection === '瓶+缶' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                    }`}
+                    onClick={() => handleBeerSetSelection('瓶+缶')}
+                  >
+                    瓶+缶
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-medium mb-3">ソーセージ（基本数量：20）</h3>
+                <div className="flex gap-3">
+                  <button
+                    className={`px-6 py-3 rounded-lg font-medium ${
+                      sausageSelection === '冷蔵のみ' ? 'bg-green-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                    }`}
+                    onClick={() => handleSausageSetSelection('冷蔵のみ')}
+                  >
+                    冷蔵のみ
+                  </button>
+                  <button
+                    className={`px-6 py-3 rounded-lg font-medium ${
+                      sausageSelection === '冷凍のみ' ? 'bg-green-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                    }`}
+                    onClick={() => handleSausageSetSelection('冷凍のみ')}
+                  >
+                    冷凍のみ
+                  </button>
+                  <button
+                    className={`px-6 py-3 rounded-lg font-medium ${
+                      sausageSelection === '冷蔵+冷凍' ? 'bg-green-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+                    }`}
+                    onClick={() => handleSausageSetSelection('冷蔵+冷凍')}
+                  >
+                    冷蔵+冷凍
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {selectedProducts.length > 0 && (
               <>
                 <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                  <h2 className="text-xl font-bold mb-4">基本情報</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input
-                      type="text"
-                      className="px-4 py-2 border rounded-lg"
-                      placeholder="顧客名"
-                      value={estimateData.customerName}
-                      onChange={(e) => setEstimateData(prev => ({ ...prev, customerName: e.target.value }))}
-                    />
-                    <select
-                      className="px-4 py-2 border rounded-lg"
-                      value={estimateData.tradeType}
-                      onChange={(e) => setEstimateData(prev => ({ ...prev, tradeType: e.target.value }))}
-                    >
-                      <option value="帳合">帳合</option>
-                      <option value="直接">直接</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                  <h2 className="text-xl font-bold mb-4">商品選択</h2>
-                  <div className="flex border-b mb-4">
-                    {categories.map(cat => (
-                      <button
-                        key={cat}
-                        className={`px-6 py-3 ${selectedTab === cat ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-600'}`}
-                        onClick={() => setSelectedTab(cat)}
-                      >
-                        {cat}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="space-y-3">
-                    {filteredProducts.map(product => (
-                      <div key={product.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                        <div>
+                  <h2 className="text-xl font-bold mb-4">選択された商品（数量調整可能）</h2>
+                  <div className="space-y-2">
+                    {selectedProducts.map(({ product, quantity }) => (
+                      <div key={product.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex-1">
                           <h3 className="font-medium">{product.name}</h3>
-                          <p className="text-sm text-gray-600">¥{getPrice(product).toLocaleString()}</p>
+                          <p className="text-sm text-gray-600">単価: ¥{getPrice(product).toLocaleString()}</p>
                         </div>
                         <div className="flex items-center gap-3">
-                          <button
-                            className="px-3 py-1 bg-white border rounded"
-                            onClick={() => handleQuantityChange(product.id, (estimateData.items[product.id] || 0) - 1)}
-                          >
-                            -
-                          </button>
                           <input
                             type="number"
-                            className="w-20 px-3 py-1 text-center border rounded"
-                            value={estimateData.items[product.id] || 0}
+                            className="w-24 px-3 py-2 text-center border rounded-lg"
+                            value={quantity}
                             onChange={(e) => handleQuantityChange(product.id, parseInt(e.target.value) || 0)}
+                            min="0"
                           />
-                          <button
-                            className="px-3 py-1 bg-white border rounded"
-                            onClick={() => handleQuantityChange(product.id, (estimateData.items[product.id] || 0) + 1)}
-                          >
-                            +
-                          </button>
                           <div className="w-32 text-right font-medium">
-                            ¥{((estimateData.items[product.id] || 0) * getPrice(product)).toLocaleString()}
+                            ¥{(quantity * getPrice(product)).toLocaleString()}
                           </div>
                         </div>
                       </div>
@@ -284,13 +407,13 @@
                 <div className="bg-white rounded-lg shadow-md p-6 mb-6">
                   <h2 className="text-xl font-bold mb-4">合計金額</h2>
                   <div className="space-y-2">
-                    <div className="flex justify-between">
+                    <div className="flex justify-between text-lg">
                       <span>小計（税抜）:</span>
-                      <span>¥{totals.subtotal.toLocaleString()}</span>
+                      <span className="font-medium">¥{totals.subtotal.toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between text-lg">
                       <span>消費税:</span>
-                      <span>¥{totals.tax.toLocaleString()}</span>
+                      <span className="font-medium">¥{totals.tax.toLocaleString()}</span>
                     </div>
                     <div className="border-t-2 pt-2">
                       <div className="flex justify-between text-2xl font-bold">
@@ -301,13 +424,21 @@
                   </div>
                 </div>
 
-                <button
-                  className="w-full py-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400"
-                  onClick={saveToNotion}
-                  disabled={saving || saved}
-                >
-                  {saving ? '保存中...' : saved ? '✓ 保存完了' : 'Notionに保存'}
-                </button>
+                <div className="flex gap-4">
+                  <button
+                    className="flex-1 px-6 py-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400"
+                    onClick={saveToNotion}
+                    disabled={saving || saved}
+                  >
+                    {saving ? '保存中...' : saved ? '✓ 保存完了' : '💾 Notionに保存'}
+                  </button>
+                  <button
+                    className="px-6 py-4 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700"
+                    onClick={() => setShowPreview(true)}
+                  >
+                    📄 見積書プレビュー
+                  </button>
+                </div>
               </>
             )}
           </div>
@@ -317,11 +448,5 @@
 
     ReactDOM.render(<EstimateApp />, document.getElementById('app'));
   </script>
-
-  <script type="text/babel">
-    const { useState, useEffect } = React;
-    ReactDOM.render(<EstimateApp />, document.getElementById('app'));
-  </script>
-
 </body>
 </html>
