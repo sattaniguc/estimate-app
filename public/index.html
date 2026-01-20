@@ -25,13 +25,16 @@
       const [saved, setSaved] = useState(false);
       const [error, setError] = useState(null);
       const [selectedTab, setSelectedTab] = useState('ビール');
-      const [showSettings, setShowSettings] = useState(false);
-      const [notionConfig, setNotionConfig] = useState({
-        token: '',
+      const [notionConfig] = useState({
         caseDbId: '2e7c631c2f0580ccb614cb9c82fbee44',
         detailDbId: '2e7c631c2f05808f9b56d965daef739e',
         productDbId: '2d2c631c2f0580f9811de2f2eed22baf'
-      });
+    });
+
+      useEffect(() => {
+        fetchProducts();
+      }, []);
+
       const [estimateData, setEstimateData] = useState({
         customerName: '',
         tradeType: '帳合',
@@ -41,26 +44,21 @@
       const categories = ['ビール', 'ソーセージ', 'その他'];
 
       const fetchProducts = async () => {
-        if (!notionConfig.token) {
-          setError('Notionトークンを設定してください');
-          return;
-        }
-
         setLoading(true);
         setError(null);
 
         try {
           const response = await fetch('/api/products', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              token: notionConfig.token,
-              productDbId: notionConfig.productDbId
-            })
-          });
-
-          const data = await response.json();
-          
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            productDbId: notionConfig.productDbId
+            // tokenは送信しない（サーバー側で環境変数から取得）
+          })
+        });
+    
+        const data = await response.json();
+      
           if (!response.ok) {
             throw new Error(data.error || 'データ取得に失敗しました');
           }
@@ -103,7 +101,7 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              token: notionConfig.token,
+              // tokenは送信しない
               caseDbId: notionConfig.caseDbId,
               detailDbId: notionConfig.detailDbId,
               customerName: estimateData.customerName,
@@ -177,46 +175,13 @@
         <div className="min-h-screen bg-gray-50 p-4">
           <div className="max-w-6xl mx-auto">
             {/* ヘッダー */}
-            <div className="bg-white rounded-lg shadow-md p-6 mb-6 flex justify-between items-center">
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
               <div>
                 <h1 className="text-3xl font-bold text-gray-800 mb-2">見積書作成</h1>
                 <p className="text-gray-600">株式会社丹後王国ブルワリー</p>
               </div>
-              <button
-                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                onClick={() => setShowSettings(!showSettings)}
-              >
-                ⚙️ 設定
-              </button>
+              {/* 設定ボタンを削除 */}
             </div>
-
-            {/* 設定パネル */}
-            {showSettings && (
-              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                <h2 className="text-xl font-bold text-gray-800 mb-4">Notion API設定</h2>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Notion Integration Token (ntn_で始まる)
-                    </label>
-                    <input
-                      type="password"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                      placeholder="ntn_xxxxxxxxxxxxx"
-                      value={notionConfig.token}
-                      onChange={(e) => setNotionConfig(prev => ({ ...prev, token: e.target.value }))}
-                    />
-                  </div>
-                  <button
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                    onClick={fetchProducts}
-                    disabled={loading}
-                  >
-                    {loading ? '読み込み中...' : '商品データを取得'}
-                  </button>
-                </div>
-              </div>
-            )}
 
             {/* エラーメッセージ */}
             {error && (
