@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>見積書作成アプリ - 株式会社丹後王国ブルワリー</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @media print {
+      .print\:hidden {
+        display: none !important;
+      }
+    }
+  </style>
 </head>
 <body class="bg-gray-50">
   <div id="app"></div>
@@ -310,5 +317,11 @@
 
     ReactDOM.render(<EstimateApp />, document.getElementById('app'));
   </script>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    ReactDOM.render(<EstimateApp />, document.getElementById('app'));
+  </script>
+
 </body>
 </html>
