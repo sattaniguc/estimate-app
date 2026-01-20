@@ -12,7 +12,9 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { token, caseDbId, detailDbId, customerName, tradeType, items } = req.body;
+    // 環境変数からトークンを取得
+    const token = process.env.NOTION_TOKEN || req.body.token;
+    const { caseDbId, detailDbId, customerName, tradeType, items } = req.body;
 
     if (!token || !caseDbId || !detailDbId || !customerName || !items) {
       return res.status(400).json({ error: '必須パラメータが不足しています' });
