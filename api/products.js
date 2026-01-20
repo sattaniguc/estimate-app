@@ -12,7 +12,6 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // 環境変数からトークンを取得（フォールバックとしてリクエストボディも受け付ける）
     const token = process.env.NOTION_TOKEN || req.body.token;
     const { productDbId } = req.body;
 
@@ -47,7 +46,13 @@ module.exports = async (req, res) => {
         category: props['カテゴリ']?.select?.name || 'その他',
         priceWholesale,
         priceDirect,
-        taxRate: props['消費税率']?.select?.name || '10%'
+        taxRate: props['消費税率']?.select?.name || '10%',
+        // 新しいプロパティ
+        containerType: props['容器/形態']?.select?.name || '',
+        storageMethod: props['保存方法']?.select?.name || '',
+        expiryDate: props['賞味期限']?.rich_text?.[0]?.text?.content || '',
+        janCode: props['JANコード']?.number?.toString() || '',
+        retailPrice: props['希望小売価格']?.number || 0
       };
     });
 
