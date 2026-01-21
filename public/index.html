@@ -75,7 +75,7 @@
       const handleBeerSetSelection = (type) => {
         setBeerSelection(type);
         const newItems = { ...estimateData.items };
-        const beerProducts = products.filter(p => p.category === 'ビール' && p.priceWholesale > 0);
+        const beerProducts = products.filter(p => p.category === 'ビール');
         
         console.log(`ビール商品数: ${beerProducts.length}, 選択: ${type}`);
         
@@ -102,7 +102,7 @@
       const handleSausageSetSelection = (type) => {
         setSausageSelection(type);
         const newItems = { ...estimateData.items };
-        const sausageProducts = products.filter(p => p.category === 'ソーセージ' && p.priceWholesale > 0);
+        const sausageProducts = products.filter(p => p.category === 'ソーセージ');
         
         console.log(`ソーセージ商品数: ${sausageProducts.length}, 選択: ${type}`);
         sausageProducts.slice(0, 3).forEach(p => {
