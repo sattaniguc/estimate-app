@@ -55,7 +55,7 @@ module.exports = async (req, res) => {
           },
           '商品': {
             relation: [{ id: item.productId }]
-          },
+          }
           '数量': {
             number: item.quantity
           }
