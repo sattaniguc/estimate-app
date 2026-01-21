@@ -12,7 +12,6 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // 環境変数からトークンを取得
     const token = process.env.NOTION_TOKEN || req.body.token;
     const { caseDbId, detailDbId, customerName, tradeType, items } = req.body;
 
@@ -23,6 +22,7 @@ module.exports = async (req, res) => {
     const notion = new Client({ auth: token });
     const today = new Date().toISOString().split('T')[0];
 
+    // 案件を作成
     const caseResponse = await notion.pages.create({
       parent: { database_id: caseDbId },
       properties: {
@@ -42,8 +42,16 @@ module.exports = async (req, res) => {
     });
 
     const caseId = caseResponse.id;
+    console.log('案件作成成功:', caseId);
 
-    const detailPromises = items.map(item => {
+    // 案件明細を一括作成
+    const detailPromises = items.map((item, index) => {
+      console.log(`明細${index + 1}:`, {
+        productId: item.productId,
+        productName: item.productName,
+        quantity: item.quantity
+      });
+
       return notion.pages.create({
         parent: { database_id: detailDbId },
         properties: {
@@ -55,11 +63,17 @@ module.exports = async (req, res) => {
           },
           '商品': {
             relation: [{ id: item.productId }]
-          }
+          },
           '数量': {
             number: item.quantity
           }
         }
+      }).then(result => {
+        console.log(`明細${index + 1}作成成功`);
+        return result;
+      }).catch(error => {
+        console.error(`明細${index + 1}作成失敗:`, error.message);
+        throw error;
       });
     });
 
@@ -73,6 +87,9 @@ module.exports = async (req, res) => {
 
   } catch (error) {
     console.error('Save API Error:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ 
+      error: error.message,
+      details: error.body || error.stack
+    });
   }
 };
