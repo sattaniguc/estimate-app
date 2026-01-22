@@ -191,11 +191,12 @@
             <div className="max-w-4xl mx-auto">
               <button className="mb-2 px-4 py-2 bg-gray-600 text-white rounded-lg print:hidden" onClick={() => setShowPreview(false)}>← 編集</button>
               <button className="mb-2 ml-2 px-4 py-2 bg-blue-600 text-white rounded-lg print:hidden" onClick={() => window.print()}>🖨 印刷/PDF</button>
-              <div className="bg-white border-2 border-gray-800 p-4">
+              <div className="bg-white p-4">
                 <div className="flex justify-between items-start mb-3">
                   <div className="bg-black text-white px-3 py-1 text-lg font-bold">御見積書</div>
                   <div className="text-right text-xs">
-                    <div className="border border-gray-400 px-6 py-1 mb-1">年　月　日</div>
+                    <div className="border border-gray-400 px-6 py-1 mb-1">
+                      {new Date().getFullYear()}年{new Date().getMonth() + 1}月{new Date().getDate()}日 </div>
                     <div>(有効期限：発行から1ヶ月)</div>
                   </div>
                 </div>
@@ -217,11 +218,11 @@
                     </div>
                   </div>
                 </div>
-                <div className="border-2 border-gray-800 p-2 mb-3 flex justify-between items-center">
-                  <span className="text-base font-bold">御見積金額</span>
-                  <span className="text-xl font-bold">¥{totals.total.toLocaleString()} -</span>
-                </div>
-                <div className="flex justify-end mb-3">
+                <div className="flex justify-between items-center mb-3">
+                  <div className="border-2 border-gray-800 p-2 flex-1 flex justify-between items-center mr-4">
+                    <span className="text-base font-bold">御見積金額</span>
+                    <span className="text-xl font-bold">¥{totals.total.toLocaleString()} -</span>
+                  </div>
                   <div className="flex gap-2">
                     <div className="border border-gray-400 w-12 h-10"></div>
                     <div className="border border-gray-400 w-12 h-10"></div>
@@ -272,12 +273,6 @@
                     <p className="text-xs whitespace-pre-wrap">{estimateData.notes}</p>
                   </div>
                 )}
-                <div className="border-t pt-2 text-xs">
-                  <p>備考：リードタイム：5日 / 1ロット：24本（ビール混載可能、瓶ビール混載可能）</p>
-                  <p className="mt-0.5">送料：1ケース250円(税別)、2ケース～無料(税別)、商品代金11,000円(税別)</p>
-                  <p className="mt-0.5">保管方法：【瓶】高温多湿を避けて保管、【缶】常温保管</p>
-                  <p className="mt-0.5">※受託生産品：600円～（税別）</p>
-                </div>
               </div>
             </div>
           </div>
