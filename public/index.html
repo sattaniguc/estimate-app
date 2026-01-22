@@ -446,14 +446,14 @@
                     {/* 空行を追加（最低20行） */}
                     {Array.from({ length: Math.max(0, 20 - selected.length) }).map((_, i) => (
                       <tr key={`empty-${i}`}>
-                        <td className="border border-gray-400 px-3 py-2">&nbsp;</td>
-                        <td className="border border-gray-400 px-3 py-2">&nbsp;</td>
-                        <td className="border border-gray-400 px-3 py-2">&nbsp;</td>
-                        <td className="border border-gray-400 px-3 py-2">&nbsp;</td>
-                        <td className="border border-gray-400 px-3 py-2">&nbsp;</td>
-                        <td className="border border-gray-400 px-3 py-2">&nbsp;</td>
+                        <td className="border border-gray-300 px-1 py-1 text-center">&nbsp;</td>
+                        <td className="border border-gray-300 px-1 py-1 text-center">&nbsp;</td>
+                        <td className="border border-gray-300 px-1 py-1 text-center">&nbsp;</td>
+                        <td className="border border-gray-300 px-1 py-1 text-center">&nbsp;</td>
+                        <td className="border border-gray-300 px-1 py-1 text-center">&nbsp;</td>
+                        <td className="border border-gray-300 px-1 py-1 text-center">&nbsp;</td>
                         {estimateData.showRetailPrice && (
-                          <td className="border border-gray-400 px-3 py-2">&nbsp;</td>
+                          <td className="border border-gray-300 px-1 py-1 text-center">&nbsp;</td>
                         )}
                       </tr>
                     ))}
@@ -488,11 +488,9 @@
 
                 {/* 備考 */}
                 {estimateData.notes && (
-                  <div className="border-t-2 border-gray-800 pt-4">
-                    <p className="font-bold mb-2">備考：</p>
-                    <p className="text-sm whitespace-pre-wrap leading-relaxed text-gray-700">
-                      {estimateData.notes}
-                    </p>
+                  <div className="border-t pt-2 mb-2">
+                    <p className="text-xs font-bold mb-1">備考：</p>
+                    <p className="text-xs whitespace-pre-wrap">{estimateData.notes || ''}</p>
                   </div>
                 )}
               </div>
