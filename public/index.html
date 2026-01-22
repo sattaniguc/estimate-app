@@ -405,39 +405,39 @@
                 </div>
 
                 {/* 商品テーブル */}
-                <table className="w-full border-collapse border-2 border-gray-800 mb-6 text-xs">
-                  <thead className="bg-gray-700 text-white">
+                <table className="w-full border-collapse border border-gray-300 mb-3 text-xs">
+                  <thead className="bg-gray-900 text-white">
                     <tr>
-                      <th className="border border-gray-600 px-3 py-2 text-left">品目</th>
-                      <th className="border border-gray-600 px-3 py-2 w-20">数量</th>
-                      <th className="border border-gray-600 px-3 py-2 w-28">単価</th>
-                      <th className="border border-gray-600 px-3 py-2 w-32">金額</th>
-                      <th className="border border-gray-600 px-3 py-2 w-24">賞味期限</th>
-                      <th className="border border-gray-600 px-3 py-2 w-32">JANコード</th>
+                      <th className="border border-gray-300 px-1 py-1 text-center">品目</th>
+                      <th className="border border-gray-300 px-1 py-1 text-center">数量</th>
+                      <th className="border border-gray-300 px-1 py-1 text-center">単価</th>
+                      <th className="border border-gray-300 px-1 py-1 text-center">金額</th>
+                      <th className="border border-gray-300 px-1 py-1 text-center">賞味期限</th>
+                      <th className="border border-gray-300 px-1 py-1 text-center">JANコード</th>
                       {estimateData.showRetailPrice && (
-                        <th className="border border-gray-600 px-3 py-2 w-28">希望小売価格</th>
+                        <th className="border border-gray-300 px-1 py-1 text-center">希望小売価格</th>
                       )}
                     </tr>
                   </thead>
                   <tbody>
                     {selected.map(({ product, quantity }) => (
                       <tr key={product.id} className="hover:bg-gray-50">
-                        <td className="border border-gray-400 px-3 py-2">{product.name}</td>
-                        <td className="border border-gray-400 px-3 py-2 text-center">{quantity}</td>
-                        <td className="border border-gray-400 px-3 py-2 text-right">
+                        <td className="border border-gray-300 px-1 py-1">{product.name}</td>
+                        <td className="border border-gray-300 px-1 py-1 text-center">{quantity}</td>
+                        <td className="border border-gray-300 px-1 py-1 text-center">
                           ¥{getPrice(product).toLocaleString()}
                         </td>
-                        <td className="border border-gray-400 px-3 py-2 text-right font-medium">
+                        <td className="border border-gray-300 px-1 py-1 text-center">
                           ¥{(getPrice(product) * quantity).toLocaleString()}
                         </td>
-                        <td className="border border-gray-400 px-3 py-2 text-center text-xs">
+                        <td className="border border-gray-300 px-1 py-1 text-center">
                           {product.expiryDate || '-'}
                         </td>
-                        <td className="border border-gray-400 px-3 py-2 text-center text-xs">
+                        <td className="border border-gray-300 px-1 py-1 text-center">
                           {product.janCode || '-'}
                         </td>
                         {estimateData.showRetailPrice && (
-                          <td className="border border-gray-400 px-3 py-2 text-right">
+                          <td className="border border-gray-300 px-1 py-1 text-center">
                             {product.retailPrice > 0 ? `¥${product.retailPrice.toLocaleString()}` : '-'}
                           </td>
                         )}
