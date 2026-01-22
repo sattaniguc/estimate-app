@@ -14,7 +14,7 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
+  
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
@@ -22,7 +22,7 @@ module.exports = async (req, res) => {
 
   try {
     const token = process.env.NOTION_TOKEN || req.body.token;
-    const { caseDbId, detailDbId, customerName, tradeType, items, notes, estimateUrl } = req.body;
+    const { caseDbId, detailDbId, customerName, tradeType, items, notes } = req.body;
 
     if (!token || !caseDbId || !detailDbId || !customerName || !items) {
       return res.status(400).json({ error: '必須パラメータが不足しています' });
@@ -45,22 +45,11 @@ module.exports = async (req, res) => {
       },
       'ステータス': {
         select: { name: '見積中' }
+      },
+      '見積書番号': {
+        rich_text: [{ text: { content: estimateNumber } }]
       }
     };
-
-    // 見積書番号を追加
-    if (estimateNumber) {
-      caseProperties['見積書番号'] = {
-        rich_text: [{ text: { content: estimateNumber } }]
-      };
-    }
-
-    // 見積書URLを追加
-    if (estimateUrl) {
-      caseProperties['見積書URL'] = {
-        url: estimateUrl
-      };
-    }
 
     // その他記載事項を追加
     if (notes) {
@@ -102,6 +91,13 @@ module.exports = async (req, res) => {
       if (item.productId) {
         detailProperties['商品'] = {
           relation: [{ id: item.productId }]
+        };
+      }
+
+      // カスタム価格がある場合は保存（将来の拡張のため）
+      if (item.customPrice) {
+        detailProperties['カスタム価格'] = {
+          number: item.customPrice
         };
       }
 
