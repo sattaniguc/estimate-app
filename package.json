@@ -4,7 +4,7 @@
   "description": "見積書作成アプリ - 株式会社丹後王国ブルワリー",
   "scripts": {
     "dev": "vercel dev",
-    "build": "echo 'No build needed for static site'"
+    "build": "echo 'No build needed'"
   },
   "keywords": [
     "notion",
