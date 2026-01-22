@@ -25,19 +25,32 @@ module.exports = async (req, res) => {
       database_id: productDbId
     });
 
+    console.log('Notion Response:', JSON.stringify(response.results[0], null, 2));
+
     const products = response.results.map(page => {
       const props = page.properties;
+      
+      // 安全にプロパティを取得
+      const getName = () => {
+        try {
+          return props['商品名']?.title?.[0]?.text?.content || '';
+        } catch (e) {
+          console.error('商品名取得エラー:', e);
+          return '';
+        }
+      };
+
       return {
         id: page.id,
-        name: props['商品名']?.title[0]?.text?.content || '',
+        name: getName(),
         category: props['カテゴリ']?.select?.name || '',
-        priceWholesale: props['卸売価格']?.number || 0,
-        priceDirect: props['直売価格']?.number || 0,
+        priceWholesale: props['納品価格（帳合）']?.number || 0,
+        priceDirect: props['納品価格（直接）']?.number || 0,
         retailPrice: props['希望小売価格']?.number || 0,
         taxRate: props['消費税率']?.select?.name || '10%',
-        expiryDate: props['賞味期限']?.rich_text[0]?.text?.content || '',
-        janCode: props['JANコード']?.rich_text[0]?.text?.content || '',
-        containerType: props['容器タイプ']?.select?.name || '',
+        expiryDate: props['賞味期限']?.rich_text?.[0]?.text?.content || '',
+        janCode: props['JANコード']?.rich_text?.[0]?.text?.content || '',
+        containerType: props['容器/形態']?.select?.name || '',
         storageMethod: props['保存方法']?.select?.name || ''
       };
     });
