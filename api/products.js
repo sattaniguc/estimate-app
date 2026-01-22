@@ -5,7 +5,7 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
+  
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
@@ -16,49 +16,45 @@ module.exports = async (req, res) => {
     const { productDbId } = req.body;
 
     if (!token || !productDbId) {
-      return res.status(400).json({ error: 'トークンまたはDB IDが不足しています' });
+      return res.status(400).json({ error: '必須パラメータが不足しています' });
     }
 
     const notion = new Client({ auth: token });
 
+    // 商品マスタを取得
     const response = await notion.databases.query({
       database_id: productDbId
     });
 
     const products = response.results.map(page => {
       const props = page.properties;
-      
-      const priceWholesale = 
-        props['納品価格（帳合）']?.number ||
-        props['納品価格(帳合)']?.number ||
-        parseInt(props['納品価格（帳合）']?.rich_text?.[0]?.text?.content) ||
-        0;
-      
-      const priceDirect = 
-        props['納品価格（直接）']?.number ||
-        props['納品価格(直接)']?.number ||
-        parseInt(props['納品価格（直接）']?.rich_text?.[0]?.text?.content) ||
-        0;
-
       return {
         id: page.id,
-        name: props['商品名']?.title?.[0]?.text?.content || '商品名なし',
-        category: props['カテゴリ']?.select?.name || 'その他',
-        priceWholesale,
-        priceDirect,
+        name: props['商品名']?.title[0]?.text?.content || '',
+        category: props['カテゴリ']?.select?.name || '',
+        priceWholesale: props['卸売価格']?.number || 0,
+        priceDirect: props['直売価格']?.number || 0,
+        retailPrice: props['希望小売価格']?.number || 0,
         taxRate: props['消費税率']?.select?.name || '10%',
-        // 新しいプロパティ
-        containerType: props['容器/形態']?.select?.name || '',
-        storageMethod: props['保存方法']?.select?.name || '',
-        expiryDate: props['賞味期限']?.rich_text?.[0]?.text?.content || '',
-        janCode: props['JANコード']?.number?.toString() || '',
-        retailPrice: props['希望小売価格']?.number || 0
+        expiryDate: props['賞味期限']?.rich_text[0]?.text?.content || '',
+        janCode: props['JANコード']?.rich_text[0]?.text?.content || '',
+        containerType: props['容器タイプ']?.select?.name || '',
+        storageMethod: props['保存方法']?.select?.name || ''
       };
     });
 
-    res.status(200).json({ products });
+    console.log(`商品データ取得成功: ${products.length}件`);
+
+    res.status(200).json({ 
+      success: true,
+      products
+    });
+
   } catch (error) {
     console.error('Products API Error:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ 
+      error: error.message,
+      details: error.body || error.stack
+    });
   }
 };
