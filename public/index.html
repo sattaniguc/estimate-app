@@ -223,10 +223,10 @@
                     <span className="text-base font-bold">御見積金額</span>
                     <span className="text-xl font-bold">¥{totals.total.toLocaleString()} -</span>
                   </div>
-                  <div className="flex gap-2">
-                    <div className="border border-gray-400 w-12 h-10"></div>
-                    <div className="border border-gray-400 w-12 h-10"></div>
-                    <div className="border border-gray-400 w-12 h-10"></div>
+                  <div className="flex gap-1">
+                    <div className="border border-gray-400 w-12 h-12"></div>
+                    <div className="border border-gray-400 w-12 h-12"></div>
+                    <div className="border border-gray-400 w-12 h-12"></div>
                   </div>
                 </div>
                 <table className="w-full border-collapse border border-gray-300 mb-3 text-xs">
@@ -257,6 +257,18 @@
                         )}
                       </tr>
                     ))}
+                    {/* 空行を追加して最低22行にする */}
+                    {Array.from({ length: Math.max(0, 22 - selected.length) }).map((_, i) => (
+                      <tr key={`empty-${i}`}>
+                        <td className="border border-gray-300 px-1 py-1">&nbsp;</td>
+                        <td className="border border-gray-300 px-1 py-1">&nbsp;</td>
+                        <td className="border border-gray-300 px-1 py-1">&nbsp;</td>
+                        <td className="border border-gray-300 px-1 py-1">&nbsp;</td>
+                        <td className="border border-gray-300 px-1 py-1">&nbsp;</td>
+                        <td className="border border-gray-300 px-1 py-1">&nbsp;</td>
+                        {estimateData.showRetailPrice && <td className="border border-gray-300 px-1 py-1">&nbsp;</td>}
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
                 <div className="flex justify-end mb-3">
@@ -267,12 +279,10 @@
                     <div className="flex justify-between font-bold py-1 text-base"><span>合計:</span><span>¥{totals.total.toLocaleString()}</span></div>
                   </div>
                 </div>
-                {estimateData.notes && (
-                  <div className="border-t pt-2 mb-2">
-                    <p className="text-xs font-bold mb-1">備考：</p>
-                    <p className="text-xs whitespace-pre-wrap">{estimateData.notes}</p>
-                  </div>
-                )}
+                <div className="border-t pt-2 mb-2">
+                  <p className="text-xs font-bold mb-1">備考：</p>
+                  <p className="text-xs whitespace-pre-wrap">{estimateData.notes || ''}</p>
+                </div>
               </div>
             </div>
           </div>
