@@ -8,8 +8,37 @@
   <style>
     @media print {
       .print\:hidden { display: none !important; }
-      body { background: white; }
-      @page { margin: 10mm; size: A4; }
+      body { 
+        background: white; 
+        margin: 0;
+        padding: 0;
+      }
+      @page { 
+        margin: 8mm; 
+        size: A4; 
+      }
+      
+      /* テーブルのフォントサイズを縮小 */
+      table {
+        font-size: 9px !important;
+      }
+      
+      /* 行の高さを調整 */
+      table td, table th {
+        padding: 2px 4px !important;
+        line-height: 1.2 !important;
+      }
+      
+      /* ヘッダー・フッターを縮小 */
+      .text-xl { font-size: 14px !important; }
+      .text-lg { font-size: 12px !important; }
+      .text-base { font-size: 10px !important; }
+      .text-sm { font-size: 9px !important; }
+      .text-xs { font-size: 8px !important; }
+      
+      /* ページブレーク制御 */
+      table { page-break-inside: auto; }
+      tr { page-break-inside: avoid; page-break-after: auto; }
     }
   </style>
 </head>
@@ -376,7 +405,7 @@
                 </div>
 
                 {/* 商品テーブル */}
-                <table className="w-full border-collapse border-2 border-gray-800 mb-6 text-sm">
+                <table className="w-full border-collapse border-2 border-gray-800 mb-6 text-xs">
                   <thead className="bg-gray-700 text-white">
                     <tr>
                       <th className="border border-gray-600 px-3 py-2 text-left">品目</th>
