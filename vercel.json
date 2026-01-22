@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "estimate-app-updated.html",
+      "src": "public/index.html",
       "use": "@vercel/static"
     },
     {
@@ -17,10 +17,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/estimate-app-updated.html"
+      "dest": "/public/index.html"
     }
-  ],
-  "env": {
-    "NOTION_TOKEN": "@notion-token"
-  }
+  ]
 }
