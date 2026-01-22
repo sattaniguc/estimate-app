@@ -2,11 +2,9 @@
   "name": "tango-brewery-estimate-app",
   "version": "1.0.0",
   "description": "見積書作成アプリ - 株式会社丹後王国ブルワリー",
-  "main": "index.js",
   "scripts": {
     "dev": "vercel dev",
-    "build": "vercel build",
-    "deploy": "vercel --prod"
+    "build": "echo 'No build needed for static site'"
   },
   "keywords": [
     "notion",
@@ -17,8 +15,5 @@
   "license": "MIT",
   "dependencies": {
     "@notionhq/client": "^2.2.15"
-  },
-  "engines": {
-    "node": ">=18.0.0"
   }
 }
