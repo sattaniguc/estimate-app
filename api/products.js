@@ -21,7 +21,6 @@ module.exports = async (req, res) => {
 
     const notion = new Client({ auth: token });
 
-    // 商品マスタを取得
     const response = await notion.databases.query({
       database_id: productDbId
     });
