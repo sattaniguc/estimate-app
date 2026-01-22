@@ -29,6 +29,8 @@
       const [saved, setSaved] = useState(false);
       const [error, setError] = useState(null);
       const [showPreview, setShowPreview] = useState(false);
+      const [viewMode, setViewMode] = useState('create'); // 'create' or 'view'
+      const [loadedEstimate, setLoadedEstimate] = useState(null);
       const [notionConfig] = useState({
         caseDbId: '2e7c631c2f0580ccb614cb9c82fbee44',
         detailDbId: '2e7c631c2f05808f9b56d965daef739e',
@@ -45,19 +47,67 @@
       const [customProductQuantity, setCustomProductQuantity] = useState(1);
       const [customProductTaxRate, setCustomProductTaxRate] = useState('10%');
 
-      useEffect(() => { fetchProducts(); }, []);
+      useEffect(() => { 
+        fetchProducts();
+        checkUrlParams();
+      }, []);
+
+      // URLパラメータをチェックして見積書IDがあれば読み込み
+      const checkUrlParams = () => {
+        const params = new URLSearchParams(window.location.search);
+        const estimateId = params.get('estimateId');
+        if (estimateId) {
+          loadEstimate(estimateId);
+        }
+      };
+
+      // 見積書を読み込む
+      const loadEstimate = async (estimateId) => {
+        setLoading(true);
+        setError(null);
+        try {
+          const res = await fetch('/api/load-estimate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              caseDbId: notionConfig.caseDbId,
+              detailDbId: notionConfig.detailDbId,
+              productDbId: notionConfig.productDbId,
+              estimateNumber: estimateId 
+            })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || '見積書の読み込みに失敗しました');
+          
+          setLoadedEstimate(data);
+          setEstimateData(data.estimateData);
+          setViewMode('view');
+          setShowPreview(true);
+          setLoading(false);
+        } catch (err) {
+          setError(`読み込み失敗: ${err.message}`);
+          setLoading(false);
+          setViewMode('create');
+        }
+      };
 
       const fetchProducts = async () => {
-        setLoading(true); setError(null);
+        setLoading(true); 
+        setError(null);
         try {
           const res = await fetch('/api/products', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ productDbId: notionConfig.productDbId })
           });
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || 'データ取得失敗');
-          setProducts(data.products); setLoading(false);
-        } catch (err) { setError(`取得失敗: ${err.message}`); setLoading(false); }
+          setProducts(data.products); 
+          setLoading(false);
+        } catch (err) { 
+          setError(`取得失敗: ${err.message}`); 
+          setLoading(false); 
+        }
       };
 
       const handleBeerSet = (type) => {
@@ -113,14 +163,25 @@
       const addCustomProduct = () => {
         if (!customProductName || !customProductPrice) return alert('商品名と単価を入力');
         const id = `custom_${Date.now()}`;
-        const prod = { id, name: customProductName, price: parseFloat(customProductPrice),
-          quantity: parseInt(customProductQuantity) || 1, expiryDate: '', janCode: '', taxRate: customProductTaxRate };
+        const prod = { 
+          id, 
+          name: customProductName, 
+          price: parseFloat(customProductPrice),
+          quantity: parseInt(customProductQuantity) || 1, 
+          expiryDate: '', 
+          janCode: '', 
+          taxRate: customProductTaxRate 
+        };
         setEstimateData(prev => ({
-          ...prev, customProducts: [...prev.customProducts, prod],
+          ...prev, 
+          customProducts: [...prev.customProducts, prod],
           items: { ...prev.items, [id]: prod.quantity },
           customPrices: { ...prev.customPrices, [id]: prod.price }
         }));
-        setCustomProductName(''); setCustomProductPrice(''); setCustomProductQuantity(1); setCustomProductTaxRate('10%');
+        setCustomProductName(''); 
+        setCustomProductPrice(''); 
+        setCustomProductQuantity(1); 
+        setCustomProductTaxRate('10%');
       };
 
       const removeItem = (id) => {
@@ -156,133 +217,255 @@
         if (!estimateData.customerName) return alert('顧客名を入力');
         const items = Object.entries(estimateData.items).filter(([_, qty]) => qty > 0).map(([id, qty]) => {
           const prod = products.find(p => p.id === id) || estimateData.customProducts.find(p => p.id === id);
-          return { productId: id.startsWith('custom_') ? null : id, productName: prod.name, quantity: qty,
-            customPrice: estimateData.customPrices[id] || null };
+          return { 
+            productId: id.startsWith('custom_') ? null : id, 
+            productName: prod.name, 
+            quantity: qty,
+            customPrice: estimateData.customPrices[id] || null 
+          };
         });
         if (items.length === 0) return alert('商品を選択');
-        setSaving(true); setError(null);
+        
+        setSaving(true); 
+        setError(null);
         try {
           const res = await fetch('/api/save', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              caseDbId: notionConfig.caseDbId, detailDbId: notionConfig.detailDbId,
-              customerName: estimateData.customerName, tradeType: estimateData.tradeType,
-              items, notes: estimateData.notes, estimateUrl: window.location.origin + window.location.pathname
+              caseDbId: notionConfig.caseDbId, 
+              detailDbId: notionConfig.detailDbId,
+              customerName: estimateData.customerName, 
+              tradeType: estimateData.tradeType,
+              items, 
+              notes: estimateData.notes
+              // 見積書URLは保存後に生成するため、ここでは送信しない
             })
           });
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || '保存失敗');
-          setSaving(false); setSaved(true);
-          alert(`保存完了\n見積番号: ${data.estimateNumber}`);
+          
+          // 保存成功後、見積書URLを更新
+          const estimateUrl = `${window.location.origin}${window.location.pathname}?estimateId=${data.estimateNumber}`;
+          
+          // Notion案件にURLを追加で保存
+          await fetch('/api/update-estimate-url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              caseId: data.caseId,
+              estimateUrl: estimateUrl
+            })
+          });
+          
+          setSaving(false); 
+          setSaved(true);
+          alert(`保存完了\n見積番号: ${data.estimateNumber}\n\n見積書URL:\n${estimateUrl}`);
+          
+          // URLをクリップボードにコピー
+          navigator.clipboard.writeText(estimateUrl).then(() => {
+            console.log('URLをクリップボードにコピーしました');
+          });
+          
           setTimeout(() => setSaved(false), 3000);
-        } catch (err) { setError(`保存失敗: ${err.message}`); setSaving(false); }
+        } catch (err) { 
+          setError(`保存失敗: ${err.message}`); 
+          setSaving(false); 
+        }
       };
 
       const totals = calculateTotals();
       const selected = Object.entries(estimateData.items).filter(([_, qty]) => qty > 0)
-        .map(([id, qty]) => ({ product: products.find(p => p.id === id) || estimateData.customProducts.find(p => p.id === id), quantity: qty }))
+        .map(([id, qty]) => ({ 
+          product: products.find(p => p.id === id) || estimateData.customProducts.find(p => p.id === id), 
+          quantity: qty 
+        }))
         .filter(item => item.product);
 
-      if (loading) return <div className="flex items-center justify-center min-h-screen"><div className="text-blue-600">読み込み中...</div></div>;
+      if (loading) return (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-blue-600 text-xl">読み込み中...</div>
+        </div>
+      );
 
       if (showPreview) {
+        const displayDate = loadedEstimate?.createdDate || new Date();
+        const estimateNumber = loadedEstimate?.estimateNumber || 'DRAFT';
+        
         return (
           <div className="min-h-screen bg-white p-4">
             <div className="max-w-4xl mx-auto">
-              <button className="mb-2 px-4 py-2 bg-gray-600 text-white rounded-lg print:hidden" onClick={() => setShowPreview(false)}>← 編集</button>
-              <button className="mb-2 ml-2 px-4 py-2 bg-blue-600 text-white rounded-lg print:hidden" onClick={() => window.print()}>🖨 印刷/PDF</button>
-              <div className="bg-white p-4">
-                <div className="flex justify-between items-start mb-3">
-                  <div className="bg-black text-white px-3 py-1 text-lg font-bold">御見積書</div>
-                  <div className="text-right text-xs">
-                    <div className="border border-gray-400 px-6 py-1 mb-1">
-                      {new Date().getFullYear()}年{new Date().getMonth() + 1}月{new Date().getDate()}日 </div>
-                    <div>(有効期限：発行から1ヶ月)</div>
+              <div className="print:hidden mb-4 flex gap-2">
+                <button 
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700" 
+                  onClick={() => {
+                    setShowPreview(false);
+                    if (viewMode === 'view') {
+                      window.history.pushState({}, '', window.location.pathname);
+                      setViewMode('create');
+                      setLoadedEstimate(null);
+                    }
+                  }}
+                >
+                  ← {viewMode === 'view' ? '新規作成' : '編集'}
+                </button>
+                <button 
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700" 
+                  onClick={() => window.print()}
+                >
+                  🖨 印刷/PDF
+                </button>
+                {viewMode === 'view' && (
+                  <div className="flex-1 text-right">
+                    <span className="inline-block px-4 py-2 bg-green-100 text-green-800 rounded-lg font-medium">
+                      見積番号: {estimateNumber}
+                    </span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="bg-white p-8 border border-gray-300">
+                {/* ヘッダー */}
+                <div className="flex justify-between items-start mb-6">
+                  <div className="bg-black text-white px-6 py-2 text-2xl font-bold">
+                    御見積書
+                  </div>
+                  <div className="text-right text-sm">
+                    <div className="border-2 border-gray-800 px-8 py-2 mb-2 inline-block">
+                      {displayDate.getFullYear()}年{displayDate.getMonth() + 1}月{displayDate.getDate()}日
+                    </div>
+                    <div className="text-gray-600">(有効期限：発行から1ヶ月)</div>
                   </div>
                 </div>
-                <div className="flex justify-between mb-3">
-                  <div className="flex-1">
-                    <div className="border-b-2 border-gray-400 pb-1 mb-2">
-                      <span className="text-base">{estimateData.customerName}</span><span className="ml-2">御中</span>
+
+                {/* 顧客情報と会社情報 */}
+                <div className="flex justify-between mb-6">
+                  <div className="flex-1 pr-8">
+                    <div className="border-b-2 border-gray-800 pb-2 mb-4">
+                      <span className="text-xl font-medium">{estimateData.customerName}</span>
+                      <span className="ml-3 text-lg">御中</span>
                     </div>
-                    <p className="text-xs mb-2">平素は格別のご高配を賜り厚く御礼申し上げます。<br/>下記の通り御見積申し上げます。宜しくお願い申し上げます。</p>
+                    <p className="text-sm text-gray-700 leading-relaxed">
+                      平素は格別のご高配を賜り厚く御礼申し上げます。<br/>
+                      下記の通り御見積申し上げます。宜しくお願い申し上げます。
+                    </p>
                   </div>
-                  <div className="ml-4 flex items-start gap-2">
-                    <img src={LOGO} alt="ロゴ" className="w-16 h-16"/>
-                    <div className="text-xs">
-                      <p className="font-bold">株式会社丹後王国ブルワリー</p>
+                  <div className="flex items-start gap-3">
+                    <img src={LOGO} alt="ロゴ" className="w-20 h-20"/>
+                    <div className="text-xs leading-relaxed">
+                      <p className="font-bold text-sm mb-1">株式会社丹後王国ブルワリー</p>
                       <p>〒627-0133</p>
                       <p>京都府京丹後市弥栄町鳥取123</p>
-                      <p>TEL: 0772-65-4193</p>
+                      <p className="mt-1">TEL: 0772-65-4193</p>
                       <p>FAX: 0772-65-4194</p>
                     </div>
                   </div>
                 </div>
-                <div className="flex justify-between items-center mb-3">
-                  <div className="border-2 border-gray-800 p-2 flex-1 flex justify-between items-center mr-4">
-                    <span className="text-base font-bold">御見積金額</span>
-                    <span className="text-xl font-bold">¥{totals.total.toLocaleString()} -</span>
+
+                {/* 見積金額 */}
+                <div className="flex justify-between items-center mb-6">
+                  <div className="border-4 border-gray-900 p-4 flex-1 flex justify-between items-center mr-6">
+                    <span className="text-lg font-bold">御見積金額</span>
+                    <span className="text-3xl font-bold">¥{totals.total.toLocaleString()} -</span>
                   </div>
                   <div className="flex gap-1">
-                    <div className="border border-gray-400 w-12 h-12"></div>
-                    <div className="border border-gray-400 w-12 h-12"></div>
-                    <div className="border border-gray-400 w-12 h-12"></div>
+                    <div className="border-2 border-gray-400 w-16 h-16"></div>
+                    <div className="border-2 border-gray-400 w-16 h-16"></div>
+                    <div className="border-2 border-gray-400 w-16 h-16"></div>
                   </div>
                 </div>
-                <table className="w-full border-collapse border border-gray-300 mb-3 text-xs">
-                  <thead className="bg-gray-600 text-white">
+
+                {/* 商品テーブル */}
+                <table className="w-full border-collapse border-2 border-gray-800 mb-6 text-sm">
+                  <thead className="bg-gray-900 text-white">
                     <tr>
-                      <th className="border border-gray-300 px-1 py-1">品目</th>
-                      <th className="border border-gray-300 px-1 py-1">数量</th>
-                      <th className="border border-gray-300 px-1 py-1">単価</th>
-                      <th className="border border-gray-300 px-1 py-1">金額</th>
-                      <th className="border border-gray-300 px-1 py-1">賞味期限</th>
-                      <th className="border border-gray-300 px-1 py-1">JANコード</th>
-                      {estimateData.showRetailPrice && <th className="border border-gray-300 px-1 py-1">希望小売価格</th>}
+                      <th className="border border-gray-600 px-3 py-2 text-left">品目</th>
+                      <th className="border border-gray-600 px-3 py-2 w-20">数量</th>
+                      <th className="border border-gray-600 px-3 py-2 w-28">単価</th>
+                      <th className="border border-gray-600 px-3 py-2 w-32">金額</th>
+                      <th className="border border-gray-600 px-3 py-2 w-24">賞味期限</th>
+                      <th className="border border-gray-600 px-3 py-2 w-32">JANコード</th>
+                      {estimateData.showRetailPrice && (
+                        <th className="border border-gray-600 px-3 py-2 w-28">希望小売価格</th>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
                     {selected.map(({ product, quantity }) => (
-                      <tr key={product.id}>
-                        <td className="border border-gray-300 px-1 py-1">{product.name}</td>
-                        <td className="border border-gray-300 px-1 py-1 text-center">{quantity}</td>
-                        <td className="border border-gray-300 px-1 py-1 text-center">¥{getPrice(product).toLocaleString()}</td>
-                        <td className="border border-gray-300 px-1 py-1 text-center">¥{(getPrice(product) * quantity).toLocaleString()}</td>
-                        <td className="border border-gray-300 px-1 py-1 text-center">{product.expiryDate || '-'}</td>
-                        <td className="border border-gray-300 px-1 py-1 text-center">{product.janCode || '-'}</td>
+                      <tr key={product.id} className="hover:bg-gray-50">
+                        <td className="border border-gray-400 px-3 py-2">{product.name}</td>
+                        <td className="border border-gray-400 px-3 py-2 text-center">{quantity}</td>
+                        <td className="border border-gray-400 px-3 py-2 text-right">
+                          ¥{getPrice(product).toLocaleString()}
+                        </td>
+                        <td className="border border-gray-400 px-3 py-2 text-right font-medium">
+                          ¥{(getPrice(product) * quantity).toLocaleString()}
+                        </td>
+                        <td className="border border-gray-400 px-3 py-2 text-center text-xs">
+                          {product.expiryDate || '-'}
+                        </td>
+                        <td className="border border-gray-400 px-3 py-2 text-center text-xs">
+                          {product.janCode || '-'}
+                        </td>
                         {estimateData.showRetailPrice && (
-                          <td className="border border-gray-300 px-1 py-1 text-center">
+                          <td className="border border-gray-400 px-3 py-2 text-right">
                             {product.retailPrice > 0 ? `¥${product.retailPrice.toLocaleString()}` : '-'}
                           </td>
                         )}
                       </tr>
                     ))}
-                    {/* 空行を追加して最低22行にする */}
-                    {Array.from({ length: Math.max(0, 22 - selected.length) }).map((_, i) => (
+                    {/* 空行を追加（最低20行） */}
+                    {Array.from({ length: Math.max(0, 20 - selected.length) }).map((_, i) => (
                       <tr key={`empty-${i}`}>
-                        <td className="border border-gray-300 px-1 py-1">&nbsp;</td>
-                        <td className="border border-gray-300 px-1 py-1">&nbsp;</td>
-                        <td className="border border-gray-300 px-1 py-1">&nbsp;</td>
-                        <td className="border border-gray-300 px-1 py-1">&nbsp;</td>
-                        <td className="border border-gray-300 px-1 py-1">&nbsp;</td>
-                        <td className="border border-gray-300 px-1 py-1">&nbsp;</td>
-                        {estimateData.showRetailPrice && <td className="border border-gray-300 px-1 py-1">&nbsp;</td>}
+                        <td className="border border-gray-400 px-3 py-2">&nbsp;</td>
+                        <td className="border border-gray-400 px-3 py-2">&nbsp;</td>
+                        <td className="border border-gray-400 px-3 py-2">&nbsp;</td>
+                        <td className="border border-gray-400 px-3 py-2">&nbsp;</td>
+                        <td className="border border-gray-400 px-3 py-2">&nbsp;</td>
+                        <td className="border border-gray-400 px-3 py-2">&nbsp;</td>
+                        {estimateData.showRetailPrice && (
+                          <td className="border border-gray-400 px-3 py-2">&nbsp;</td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
                 </table>
-                <div className="flex justify-end mb-3">
-                  <div className="w-56 text-sm">
-                    <div className="flex justify-between border-b py-1"><span>小計（税抜）:</span><span>¥{totals.subtotal.toLocaleString()}</span></div>
-                    {totals.tax8 > 0 && <div className="flex justify-between border-b py-1"><span>消費税（8%）:</span><span>¥{totals.tax8.toLocaleString()}</span></div>}
-                    {totals.tax10 > 0 && <div className="flex justify-between border-b py-1"><span>消費税（10%）:</span><span>¥{totals.tax10.toLocaleString()}</span></div>}
-                    <div className="flex justify-between font-bold py-1 text-base"><span>合計:</span><span>¥{totals.total.toLocaleString()}</span></div>
+
+                {/* 合計金額 */}
+                <div className="flex justify-end mb-6">
+                  <div className="w-80">
+                    <div className="flex justify-between border-b border-gray-400 py-2">
+                      <span className="font-medium">小計（税抜）:</span>
+                      <span className="font-medium">¥{totals.subtotal.toLocaleString()}</span>
+                    </div>
+                    {totals.tax8 > 0 && (
+                      <div className="flex justify-between border-b border-gray-400 py-2">
+                        <span className="font-medium">消費税（8%）:</span>
+                        <span className="font-medium">¥{totals.tax8.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {totals.tax10 > 0 && (
+                      <div className="flex justify-between border-b border-gray-400 py-2">
+                        <span className="font-medium">消費税（10%）:</span>
+                        <span className="font-medium">¥{totals.tax10.toLocaleString()}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between font-bold py-3 text-lg border-t-2 border-gray-800">
+                      <span>合計:</span>
+                      <span>¥{totals.total.toLocaleString()}</span>
+                    </div>
                   </div>
                 </div>
-                <div className="border-t pt-2 mb-2">
-                  <p className="text-xs font-bold mb-1">備考：</p>
-                  <p className="text-xs whitespace-pre-wrap">{estimateData.notes || ''}</p>
-                </div>
+
+                {/* 備考 */}
+                {estimateData.notes && (
+                  <div className="border-t-2 border-gray-800 pt-4">
+                    <p className="font-bold mb-2">備考：</p>
+                    <p className="text-sm whitespace-pre-wrap leading-relaxed text-gray-700">
+                      {estimateData.notes}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -296,54 +479,157 @@
               <h1 className="text-3xl font-bold mb-2">見積書作成</h1>
               <p className="text-gray-600">株式会社丹後王国ブルワリー</p>
             </div>
-            {error && <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6"><p className="text-red-800 font-medium">エラー</p><p className="text-red-700 text-sm">{error}</p></div>}
+            
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                <p className="text-red-800 font-medium">エラー</p>
+                <p className="text-red-700 text-sm">{error}</p>
+              </div>
+            )}
+            
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
               <h2 className="text-xl font-bold mb-4">基本情報</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div><label className="block text-sm font-medium mb-2">顧客名 *</label>
-                  <input type="text" className="w-full px-4 py-2 border rounded-lg" placeholder="株式会社〇〇" value={estimateData.customerName} onChange={(e) => setEstimateData(p => ({ ...p, customerName: e.target.value }))} /></div>
-                <div><label className="block text-sm font-medium mb-2">取引形態 *</label>
-                  <select className="w-full px-4 py-2 border rounded-lg" value={estimateData.tradeType} onChange={(e) => setEstimateData(p => ({ ...p, tradeType: e.target.value }))}>
-                    <option value="帳合">帳合</option><option value="直接">直接</option></select></div>
-                <div className="flex items-end"><label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={estimateData.showRetailPrice} onChange={(e) => setEstimateData(p => ({ ...p, showRetailPrice: e.target.checked }))} className="w-4 h-4" />
-                  <span className="text-sm">希望小売価格を表示</span></label></div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">顧客名 *</label>
+                  <input 
+                    type="text" 
+                    className="w-full px-4 py-2 border rounded-lg" 
+                    placeholder="株式会社〇〇" 
+                    value={estimateData.customerName} 
+                    onChange={(e) => setEstimateData(p => ({ ...p, customerName: e.target.value }))} 
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">取引形態 *</label>
+                  <select 
+                    className="w-full px-4 py-2 border rounded-lg" 
+                    value={estimateData.tradeType} 
+                    onChange={(e) => setEstimateData(p => ({ ...p, tradeType: e.target.value }))}
+                  >
+                    <option value="帳合">帳合</option>
+                    <option value="直接">直接</option>
+                  </select>
+                </div>
+                <div className="flex items-end">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={estimateData.showRetailPrice} 
+                      onChange={(e) => setEstimateData(p => ({ ...p, showRetailPrice: e.target.checked }))} 
+                      className="w-4 h-4" 
+                    />
+                    <span className="text-sm">希望小売価格を表示</span>
+                  </label>
+                </div>
               </div>
-              <div><label className="block text-sm font-medium mb-2">その他記載事項（見積書下部に表示）</label>
-                <textarea className="w-full px-4 py-2 border rounded-lg" rows="3" placeholder="配送条件、支払条件など" value={estimateData.notes} onChange={(e) => setEstimateData(p => ({ ...p, notes: e.target.value }))} /></div>
+              <div>
+                <label className="block text-sm font-medium mb-2">その他記載事項（見積書下部に表示）</label>
+                <textarea 
+                  className="w-full px-4 py-2 border rounded-lg" 
+                  rows="3" 
+                  placeholder="配送条件、支払条件など" 
+                  value={estimateData.notes} 
+                  onChange={(e) => setEstimateData(p => ({ ...p, notes: e.target.value }))} 
+                />
+              </div>
             </div>
+            
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
               <h2 className="text-xl font-bold mb-4">商品セット選択</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div><h3 className="font-medium mb-3">ビール（基本数量：24）</h3>
+                <div>
+                  <h3 className="font-medium mb-3">ビール（基本数量：24）</h3>
                   <div className="flex flex-col gap-2">
                     {['瓶のみ', '缶のみ', '瓶+缶'].map(t => (
-                      <button key={t} className={`px-6 py-3 rounded-lg font-medium ${beerSelection === t ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`} onClick={() => handleBeerSet(t)}>
-                        {t} {beerSelection === t && '(クリックで解除)'}</button>
-                    ))}</div></div>
-                <div><h3 className="font-medium mb-3">ソーセージ（基本数量：20）</h3>
+                      <button 
+                        key={t} 
+                        className={`px-6 py-3 rounded-lg font-medium transition ${
+                          beerSelection === t 
+                            ? 'bg-blue-600 text-white' 
+                            : 'bg-gray-100 hover:bg-gray-200'
+                        }`} 
+                        onClick={() => handleBeerSet(t)}
+                      >
+                        {t} {beerSelection === t && '(クリックで解除)'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <h3 className="font-medium mb-3">ソーセージ（基本数量：20）</h3>
                   <div className="flex flex-col gap-2">
                     {['冷蔵のみ', '冷凍のみ', '冷蔵+冷凍'].map(t => (
-                      <button key={t} className={`px-6 py-3 rounded-lg font-medium ${sausageSelection === t ? 'bg-green-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`} onClick={() => handleSausageSet(t)}>
-                        {t} {sausageSelection === t && '(クリックで解除)'}</button>
-                    ))}</div></div>
+                      <button 
+                        key={t} 
+                        className={`px-6 py-3 rounded-lg font-medium transition ${
+                          sausageSelection === t 
+                            ? 'bg-green-600 text-white' 
+                            : 'bg-gray-100 hover:bg-gray-200'
+                        }`} 
+                        onClick={() => handleSausageSet(t)}
+                      >
+                        {t} {sausageSelection === t && '(クリックで解除)'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
+            
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
               <h2 className="text-xl font-bold mb-4">マスタにない商品を追加</h2>
               <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
-                <div className="md:col-span-2"><label className="block text-sm font-medium mb-2">商品名</label>
-                  <input type="text" className="w-full px-4 py-2 border rounded-lg" placeholder="商品名" value={customProductName} onChange={(e) => setCustomProductName(e.target.value)} /></div>
-                <div><label className="block text-sm font-medium mb-2">単価</label>
-                  <input type="number" className="w-full px-4 py-2 border rounded-lg" placeholder="単価" value={customProductPrice} onChange={(e) => setCustomProductPrice(e.target.value)} /></div>
-                <div><label className="block text-sm font-medium mb-2">数量</label>
-                  <input type="number" className="w-full px-4 py-2 border rounded-lg" placeholder="数量" value={customProductQuantity} onChange={(e) => setCustomProductQuantity(e.target.value)} /></div>
-                <div><label className="block text-sm font-medium mb-2">消費税</label>
-                  <select className="w-full px-4 py-2 border rounded-lg" value={customProductTaxRate} onChange={(e) => setCustomProductTaxRate(e.target.value)}>
-                    <option value="10%">10%</option><option value="8%">8%</option></select></div>
-                <button className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700" onClick={addCustomProduct}>追加</button>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium mb-2">商品名</label>
+                  <input 
+                    type="text" 
+                    className="w-full px-4 py-2 border rounded-lg" 
+                    placeholder="商品名" 
+                    value={customProductName} 
+                    onChange={(e) => setCustomProductName(e.target.value)} 
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">単価</label>
+                  <input 
+                    type="number" 
+                    className="w-full px-4 py-2 border rounded-lg" 
+                    placeholder="単価" 
+                    value={customProductPrice} 
+                    onChange={(e) => setCustomProductPrice(e.target.value)} 
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">数量</label>
+                  <input 
+                    type="number" 
+                    className="w-full px-4 py-2 border rounded-lg" 
+                    placeholder="数量" 
+                    value={customProductQuantity} 
+                    onChange={(e) => setCustomProductQuantity(e.target.value)} 
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">消費税</label>
+                  <select 
+                    className="w-full px-4 py-2 border rounded-lg" 
+                    value={customProductTaxRate} 
+                    onChange={(e) => setCustomProductTaxRate(e.target.value)}
+                  >
+                    <option value="10%">10%</option>
+                    <option value="8%">8%</option>
+                  </select>
+                </div>
+                <button 
+                  className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition" 
+                  onClick={addCustomProduct}
+                >
+                  追加
+                </button>
               </div>
             </div>
+            
             {selected.length > 0 && (
               <>
                 <div className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -351,32 +637,86 @@
                   <div className="space-y-2">
                     {selected.map(({ product, quantity }) => (
                       <div key={product.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div className="flex-1"><h3 className="font-medium">{product.name}</h3></div>
+                        <div className="flex-1">
+                          <h3 className="font-medium">{product.name}</h3>
+                        </div>
                         <div className="flex items-center gap-3">
-                          <div><label className="text-xs text-gray-600">単価</label>
-                            <input type="number" className="w-24 px-2 py-1 text-center border rounded" value={estimateData.customPrices[product.id] || getPrice(product)} onChange={(e) => handlePriceChange(product.id, e.target.value)} /></div>
-                          <div><label className="text-xs text-gray-600">数量</label>
-                            <input type="number" className="w-20 px-2 py-1 text-center border rounded" value={quantity} onChange={(e) => handleQtyChange(product.id, parseInt(e.target.value) || 0)} min="0" /></div>
-                          <div className="w-32 text-right font-medium">¥{(quantity * getPrice(product)).toLocaleString()}</div>
-                          <button className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200" onClick={() => removeItem(product.id)}>✕</button>
+                          <div>
+                            <label className="text-xs text-gray-600">単価</label>
+                            <input 
+                              type="number" 
+                              className="w-24 px-2 py-1 text-center border rounded" 
+                              value={estimateData.customPrices[product.id] || getPrice(product)} 
+                              onChange={(e) => handlePriceChange(product.id, e.target.value)} 
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-600">数量</label>
+                            <input 
+                              type="number" 
+                              className="w-20 px-2 py-1 text-center border rounded" 
+                              value={quantity} 
+                              onChange={(e) => handleQtyChange(product.id, parseInt(e.target.value) || 0)} 
+                              min="0" 
+                            />
+                          </div>
+                          <div className="w-32 text-right font-medium">
+                            ¥{(quantity * getPrice(product)).toLocaleString()}
+                          </div>
+                          <button 
+                            className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition" 
+                            onClick={() => removeItem(product.id)}
+                          >
+                            ✕
+                          </button>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
+                
                 <div className="bg-white rounded-lg shadow-md p-6 mb-6">
                   <h2 className="text-xl font-bold mb-4">合計金額</h2>
                   <div className="space-y-2">
-                    <div className="flex justify-between text-lg"><span>小計（税抜）:</span><span className="font-medium">¥{totals.subtotal.toLocaleString()}</span></div>
-                    {totals.tax8 > 0 && <div className="flex justify-between text-lg"><span>消費税（8%）:</span><span className="font-medium">¥{totals.tax8.toLocaleString()}</span></div>}
-                    {totals.tax10 > 0 && <div className="flex justify-between text-lg"><span>消費税（10%）:</span><span className="font-medium">¥{totals.tax10.toLocaleString()}</span></div>}
-                    <div className="border-t-2 pt-2"><div className="flex justify-between text-2xl font-bold"><span>合計:</span><span className="text-blue-600">¥{totals.total.toLocaleString()}</span></div></div>
+                    <div className="flex justify-between text-lg">
+                      <span>小計（税抜）:</span>
+                      <span className="font-medium">¥{totals.subtotal.toLocaleString()}</span>
+                    </div>
+                    {totals.tax8 > 0 && (
+                      <div className="flex justify-between text-lg">
+                        <span>消費税（8%）:</span>
+                        <span className="font-medium">¥{totals.tax8.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {totals.tax10 > 0 && (
+                      <div className="flex justify-between text-lg">
+                        <span>消費税（10%）:</span>
+                        <span className="font-medium">¥{totals.tax10.toLocaleString()}</span>
+                      </div>
+                    )}
+                    <div className="border-t-2 pt-2">
+                      <div className="flex justify-between text-2xl font-bold">
+                        <span>合計:</span>
+                        <span className="text-blue-600">¥{totals.total.toLocaleString()}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
+                
                 <div className="flex gap-4">
-                  <button className="flex-1 px-6 py-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400" onClick={saveToNotion} disabled={saving || saved}>
-                    {saving ? '保存中...' : saved ? '✓ 保存完了' : '💾 Notionに保存'}</button>
-                  <button className="px-6 py-4 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700" onClick={() => setShowPreview(true)}>📄 見積書プレビュー</button>
+                  <button 
+                    className="flex-1 px-6 py-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 transition" 
+                    onClick={saveToNotion} 
+                    disabled={saving || saved}
+                  >
+                    {saving ? '保存中...' : saved ? '✓ 保存完了' : '💾 Notionに保存'}
+                  </button>
+                  <button 
+                    className="px-6 py-4 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition" 
+                    onClick={() => setShowPreview(true)}
+                  >
+                    📄 見積書プレビュー
+                  </button>
                 </div>
               </>
             )}
@@ -384,6 +724,7 @@
         </div>
       );
     }
+    
     ReactDOM.render(<EstimateApp />, document.getElementById('app'));
   </script>
 </body>
