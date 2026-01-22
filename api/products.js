@@ -49,7 +49,7 @@ module.exports = async (req, res) => {
         retailPrice: props['希望小売価格']?.number || 0,
         taxRate: props['消費税率']?.select?.name || '10%',
         expiryDate: props['賞味期限']?.rich_text?.[0]?.text?.content || '',
-        janCode: props['JANコード']?.rich_text?.[0]?.text?.content || '',
+        janCode: props['JANコード']?.number?.toString() || '',
         containerType: props['容器/形態']?.select?.name || '',
         storageMethod: props['保存方法']?.select?.name || ''
       };
