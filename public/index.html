@@ -32,7 +32,7 @@
         print-color-adjust: exact !important;
       }
       
-      /* テーブルのフォントサイズを縮小 */
+      /* テーブルのフォントサイズ */
       table {
         font-size: 9px !important;
       }
@@ -748,8 +748,7 @@
       );
     }
     
-    const root = ReactDOM.createRoot(document.getElementById('app'));
-    root.render(<EstimateApp />);
+    ReactDOM.render(<EstimateApp />, document.getElementById('app'));
   </script>
 </body>
 </html>
