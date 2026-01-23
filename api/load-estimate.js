@@ -40,9 +40,9 @@ module.exports = async (req, res) => {
     const caseId = caseData.id;
 
     // 案件情報を取得
-    const customerName = caseData.properties['顧客名']?.rich_text[0]?.text?.content || '';
+    const customerName = caseData.properties['顧客名']?.rich_text?.[0]?.text?.content || '';
     const tradeType = caseData.properties['取引形態']?.select?.name || '帳合';
-    const notes = caseData.properties['その他記載事項']?.rich_text[0]?.text?.content || '';
+    const notes = caseData.properties['その他記載事項']?.rich_text?.[0]?.text?.content || '';
     const createdTime = new Date(caseData.created_time);
 
     // 案件に紐づく明細を取得
@@ -86,9 +86,9 @@ module.exports = async (req, res) => {
 
     for (const detail of detailQuery.results) {
       const props = detail.properties;
-      const productName = props['明細名']?.title[0]?.text?.content || '';
+      const productName = props['明細名']?.title?.[0]?.text?.content || '';
       const quantity = props['数量']?.number || 0;
-      const productRelation = props['商品']?.relation[0]?.id;
+      const productRelation = props['商品']?.relation?.[0]?.id;
 
       if (productRelation) {
         // 既存商品
