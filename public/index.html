@@ -748,7 +748,8 @@
       );
     }
     
-    ReactDOM.render(<EstimateApp />, document.getElementById('app'));
+    const root = ReactDOM.createRoot(document.getElementById('app'));
+    root.render(<EstimateApp />);
   </script>
 </body>
 </html>
