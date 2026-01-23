@@ -15,15 +15,8 @@
         padding: 0;
       }
       @page { 
-        margin: 5mm; 
+        margin: 6mm; 
         size: A4 portrait;
-      }
-      
-      /* 全体を縮小して1ページに収める */
-      html {
-        zoom: 0.85;
-        -moz-transform: scale(0.85);
-        -moz-transform-origin: 0 0;
       }
       
       /* 印刷時のテーブルヘッダー色を強制 */
@@ -39,55 +32,53 @@
         print-color-adjust: exact !important;
       }
       
-      /* テーブル全体のフォントサイズ調整 */
+      /* テーブルのフォントサイズ（前回のまま維持） */
       table {
-        font-size: 8px !important;
-        line-height: 1.1 !important;
+        font-size: 10px !important;
       }
       
-      /* 行の高さを最小限に */
+      /* 行の高さを調整 */
       table td, table th {
-        padding: 1px 3px !important;
-        line-height: 1.1 !important;
+        padding: 2px 4px !important;
+        line-height: 1.2 !important;
       }
       
-      /* ヘッダー・フッターを縮小 */
-      .text-3xl { font-size: 16px !important; }
-      .text-2xl { font-size: 14px !important; }
-      .text-xl { font-size: 12px !important; }
-      .text-lg { font-size: 10px !important; }
-      .text-base { font-size: 9px !important; }
-      .text-sm { font-size: 8px !important; }
-      .text-xs { font-size: 7px !important; }
+      /* ヘッダー・フッター部分のみ縮小 */
+      .text-3xl { font-size: 18px !important; }
+      .text-2xl { font-size: 16px !important; }
+      .text-xl { font-size: 14px !important; }
+      .text-lg { font-size: 11px !important; }
+      .text-base { font-size: 10px !important; }
+      .text-sm { font-size: 9px !important; }
+      .text-xs { font-size: 8px !important; }
       
-      /* 余白を最小限に */
-      .mb-6, .mb-4, .mb-3, .mb-2 {
-        margin-bottom: 2mm !important;
-      }
+      /* 余白を調整（テーブル以外） */
+      .mb-6 { margin-bottom: 3mm !important; }
+      .mb-4 { margin-bottom: 2mm !important; }
+      .mb-3 { margin-bottom: 2mm !important; }
       
+      /* ヘッダー部分のパディング削減 */
       .p-8 {
-        padding: 3mm !important;
+        padding: 4mm !important;
+      }
+      
+      /* ロゴサイズ縮小 */
+      img {
+        width: 16mm !important;
+        height: 16mm !important;
+      }
+      
+      /* 会社情報の行間を詰める */
+      .leading-relaxed {
+        line-height: 1.3 !important;
       }
       
       /* ページブレーク制御 */
       table { 
         page-break-inside: avoid;
-        page-break-after: avoid;
       }
       tr { 
         page-break-inside: avoid;
-        page-break-after: auto;
-      }
-      
-      /* 合計金額セクションを縮小 */
-      .w-80 {
-        width: 60mm !important;
-      }
-      
-      /* ロゴを縮小 */
-      img {
-        width: 15mm !important;
-        height: 15mm !important;
       }
     }
   </style>
