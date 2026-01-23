@@ -15,11 +15,18 @@
         padding: 0;
       }
       @page { 
-        margin: 8mm; 
-        size: A4; 
+        margin: 5mm; 
+        size: A4 portrait;
       }
       
-      /* 【追加】印刷時のテーブルヘッダー色を強制 */
+      /* 全体を縮小して1ページに収める */
+      html {
+        zoom: 0.85;
+        -moz-transform: scale(0.85);
+        -moz-transform-origin: 0 0;
+      }
+      
+      /* 印刷時のテーブルヘッダー色を強制 */
       thead {
         background-color: #000000 !important;
         -webkit-print-color-adjust: exact !important;
@@ -32,12 +39,56 @@
         print-color-adjust: exact !important;
       }
       
-      /* テーブルのフォントサイズを縮小 */
+      /* テーブル全体のフォントサイズ調整 */
       table {
-        font-size: 10px !important;
+        font-size: 8px !important;
+        line-height: 1.1 !important;
       }
       
-      /* 以下省略... */
+      /* 行の高さを最小限に */
+      table td, table th {
+        padding: 1px 3px !important;
+        line-height: 1.1 !important;
+      }
+      
+      /* ヘッダー・フッターを縮小 */
+      .text-3xl { font-size: 16px !important; }
+      .text-2xl { font-size: 14px !important; }
+      .text-xl { font-size: 12px !important; }
+      .text-lg { font-size: 10px !important; }
+      .text-base { font-size: 9px !important; }
+      .text-sm { font-size: 8px !important; }
+      .text-xs { font-size: 7px !important; }
+      
+      /* 余白を最小限に */
+      .mb-6, .mb-4, .mb-3, .mb-2 {
+        margin-bottom: 2mm !important;
+      }
+      
+      .p-8 {
+        padding: 3mm !important;
+      }
+      
+      /* ページブレーク制御 */
+      table { 
+        page-break-inside: avoid;
+        page-break-after: avoid;
+      }
+      tr { 
+        page-break-inside: avoid;
+        page-break-after: auto;
+      }
+      
+      /* 合計金額セクションを縮小 */
+      .w-80 {
+        width: 60mm !important;
+      }
+      
+      /* ロゴを縮小 */
+      img {
+        width: 15mm !important;
+        height: 15mm !important;
+      }
     }
   </style>
 </head>
@@ -317,10 +368,14 @@
       );
 
       if (showPreview) {
-        const displayDate = loadedEstimate?.createdDate || new Date();
-        const estimateNumber = loadedEstimate?.estimateNumber || 'DRAFT';
-        
-        return (
+        const displayDate = loadedEstimate?.createdDate 
+            ? new Date(loadedEstimate.createdDate) 
+            : new Date();
+          
+          const estimateNumber = loadedEstimate?.estimateNumber || 'DRAFT';
+          
+          return (
+            
           <div className="min-h-screen bg-white p-4">
             <div className="max-w-4xl mx-auto">
               <div className="print:hidden mb-4 flex gap-2">
