@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>見積書作成アプリ - 株式会社丹後王国ブルワリー</title>
   <script src="https://cdn.tailwindcss.com"></script>
+
   <style>
     @media print {
       .print\:hidden { display: none !important; }
@@ -18,27 +19,25 @@
         size: A4; 
       }
       
+      /* 【追加】印刷時のテーブルヘッダー色を強制 */
+      thead {
+        background-color: #000000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      
+      thead th {
+        color: #ffffff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      
       /* テーブルのフォントサイズを縮小 */
       table {
-        font-size: 9px !important;
+        font-size: 10px !important;
       }
       
-      /* 行の高さを調整 */
-      table td, table th {
-        padding: 2px 4px !important;
-        line-height: 1.2 !important;
-      }
-      
-      /* ヘッダー・フッターを縮小 */
-      .text-xl { font-size: 14px !important; }
-      .text-lg { font-size: 12px !important; }
-      .text-base { font-size: 10px !important; }
-      .text-sm { font-size: 9px !important; }
-      .text-xs { font-size: 8px !important; }
-      
-      /* ページブレーク制御 */
-      table { page-break-inside: auto; }
-      tr { page-break-inside: avoid; page-break-after: auto; }
+      /* 以下省略... */
     }
   </style>
 </head>
@@ -405,7 +404,7 @@
                 </div>
 
                 {/* 商品テーブル */}
-                <table className="w-full border-collapse border border-gray-300 mb-3 text-xs">
+                <table className="w-full border-collapse border border-gray-300 mb-3 text-sm">
                   <thead className="bg-gray-900 text-white">
                     <tr>
                       <th className="border border-gray-300 px-1 py-1 text-center">品目</th>
