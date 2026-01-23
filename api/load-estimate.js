@@ -65,15 +65,16 @@ module.exports = async (req, res) => {
       const props = page.properties;
       return {
         id: page.id,
-        name: props['商品名']?.title[0]?.text?.content || '',
+        name: props['商品名']?.title?.[0]?.text?.content || '',
         category: props['カテゴリ']?.select?.name || '',
-        priceWholesale: props['卸売価格']?.number || 0,
-        priceDirect: props['直売価格']?.number || 0,
+        priceWholesale: props['納品価格(帳合)']?.number || 0,
+        priceDirect: props['納品価格(直接)']?.number || 0,
         retailPrice: props['希望小売価格']?.number || 0,
         taxRate: props['消費税率']?.select?.name || '10%',
-        expiryDate: props['賞味期限']?.rich_text[0]?.text?.content || '',
-        janCode: props['JANコード']?.rich_text[0]?.text?.content || '',
-        containerType: props['容器タイプ']?.select?.name || '',
+        expiryDate: props['賞味期限']?.rich_text?.[0]?.text?.content || '',
+        janCode: props['JANコード']?.number?.toString() || 
+                 props['JANコード']?.rich_text?.[0]?.text?.content || '',
+        containerType: props['容器/形態']?.select?.name || '',
         storageMethod: props['保存方法']?.select?.name || ''
       };
     });
