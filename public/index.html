@@ -15,7 +15,7 @@
       padding: 0;
     }
     @page { 
-      margin: 8mm; 
+      margin: 5mm; 
       size: A4; 
     }
     
@@ -34,17 +34,37 @@
     
     /* テーブルのフォントサイズを縮小 */
     table {
-      font-size: 9px !important;
+      font-size: 10px !important;
     }
       
-      /* ページブレーク制御 */
-      table { 
-        page-break-inside: avoid;
-      }
-      tr { 
-        page-break-inside: avoid;
-      }
+    /* ページブレーク制御 */
+    table { 
+      page-break-inside: avoid;
     }
+    tr { 
+      page-break-inside: avoid;
+    }
+  
+    /* 御見積金額ボックスを縮小 */
+    .text-3xl { font-size: 20px !important; }
+    .text-lg { font-size: 12px !important; }
+    
+    /* 全体的な余白調整 */
+    .mb-6 { margin-bottom: 2mm !important; }
+    .mb-4 { margin-bottom: 1.5mm !important; }
+    .p-4 { padding: 3mm !important; }
+    
+    /* 消費税を横並びに */
+    .tax-row {
+      display: flex !important;
+      justify-content: space-between !important;
+    }
+    
+    .tax-item {
+      display: flex !important;
+      gap: 8px !important;
+    }
+  }
   </style>
 </head>
 <body class="bg-gray-50">
@@ -402,9 +422,9 @@
 
                 {/* 見積金額 */}
                 <div className="flex justify-between items-center mb-6">
-                  <div className="border-4 border-gray-900 p-4 flex-1 flex justify-between items-center mr-6">
-                    <span className="text-lg font-bold">御見積金額</span>
-                    <span className="text-3xl font-bold">¥{totals.total.toLocaleString()} -</span>
+                  <div className="border-4 border-gray-900 p-3 flex-1 flex justify-between items-center mr-6">
+                    <span className="text-base font-bold">御見積金額</span>
+                    <span className="text-2xl font-bold">¥{totals.total.toLocaleString()} -</span>
                   </div>
                   <div className="flex gap-1">
                     <div className="border-2 border-gray-400 w-16 h-16"></div>
@@ -470,39 +490,34 @@
                 </table>
 
                 {/* 合計金額 */}
-                <div className="flex justify-end mb-6">
+                <div className="flex justify-end mb-4">
                   <div className="w-80">
                     <div className="flex justify-between border-b border-gray-400 py-2">
-                      <span className="font-small">小計（税抜）:</span>
-                      <span className="font-small">¥{totals.subtotal.toLocaleString()}</span>
+                      <span className="text-sm">小計（税抜）:</span>
+                      <span className="text-sm">¥{totals.subtotal.toLocaleString()}</span>
                     </div>
-                    {totals.tax8 > 0 && (
+                    
+                    {/* 消費税を横並びに */}
+                    {(totals.tax8 > 0 || totals.tax10 > 0) && (
                       <div className="flex justify-between border-b border-gray-400 py-2">
-                        <span className="font-small">消費税（8%）:</span>
-                        <span className="font-small">¥{totals.tax8.toLocaleString()}</span>
+                        <span className="text-sm">消費税:</span>
+                        <div className="flex gap-4">
+                          {totals.tax8 > 0 && (
+                            <span className="text-sm">（8%）¥{totals.tax8.toLocaleString()}</span>
+                          )}
+                          {totals.tax10 > 0 && (
+                            <span className="text-sm">（10%）¥{totals.tax10.toLocaleString()}</span>
+                          )}
+                        </div>
                       </div>
                     )}
-                    {totals.tax10 > 0 && (
-                      <div className="flex justify-between border-b border-gray-400 py-2">
-                        <span className="font-small">消費税（10%）:</span>
-                        <span className="font-small">¥{totals.tax10.toLocaleString()}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between font-bold py-3 text-lg border-t-2 border-gray-800">
+                    
+                    <div className="flex justify-between font-bold py-2 text-base border-t-2 border-gray-800">
                       <span>合計:</span>
                       <span>¥{totals.total.toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
-
-                {/* 備考 */}
-                <div className="border-t pt-2 mb-2">
-                  <p className="text-xs font-bold mb-1">備考：</p>
-                  <p className="text-xs whitespace-pre-wrap">{estimateData.notes || ''}</p>
-                </div>
-              </div>
-            </div>
-          </div>
         );
       }
 
