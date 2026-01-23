@@ -452,8 +452,8 @@
                         )}
                       </tr>
                     ))}
-                    {/* 空行を追加（最低20行） */}
-                    {Array.from({ length: Math.max(0, 20 - selected.length) }).map((_, i) => (
+                    {/* 空行を追加（最低18行） */}
+                    {Array.from({ length: Math.max(0, 18 - selected.length) }).map((_, i) => (
                       <tr key={`empty-${i}`}>
                         <td className="border border-gray-300 px-1 py-1 text-center">&nbsp;</td>
                         <td className="border border-gray-300 px-1 py-1 text-center">&nbsp;</td>
