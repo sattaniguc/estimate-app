@@ -79,27 +79,40 @@ module.exports = async (req, res) => {
       };
     });
 
+    // 明細をsortOrderでソート
+    const sortedDetails = detailQuery.results.sort((a, b) => {
+      const orderA = a.properties['並び順']?.number ?? 999;
+      const orderB = b.properties['並び順']?.number ?? 999;
+      return orderA - orderB;
+    });
+
     // 明細から商品リストと数量を復元
     const items = {};
     const customPrices = {};
     const customProducts = [];
+    const itemsOrder = [];
 
-    for (const detail of detailQuery.results) {
+    for (const detail of sortedDetails) {
       const props = detail.properties;
       const productName = props['明細名']?.title?.[0]?.text?.content || '';
       const quantity = props['数量']?.number || 0;
       const productRelation = props['商品']?.relation?.[0]?.id;
+      const customPrice = props['カスタム価格']?.number;
 
       if (productRelation) {
         // 既存商品
         items[productRelation] = quantity;
+        itemsOrder.push(productRelation);
+        if (customPrice) {
+          customPrices[productRelation] = customPrice;
+        }
       } else {
         // カスタム商品
         const customId = `custom_${Date.now()}_${Math.random()}`;
         const customProduct = {
           id: customId,
           name: productName,
-          price: 0, // カスタム価格は明細に保存されていないため0
+          price: customPrice || 0,
           quantity: quantity,
           expiryDate: '',
           janCode: '',
@@ -107,17 +120,22 @@ module.exports = async (req, res) => {
         };
         customProducts.push(customProduct);
         items[customId] = quantity;
+        itemsOrder.push(customId);
+        if (customPrice) {
+          customPrices[customId] = customPrice;
+        }
       }
     }
 
     const estimateData = {
       customerName,
       tradeType,
-      showRetailPrice: false, // デフォルト値
+      showRetailPrice: false,
       notes,
       items,
       customPrices,
-      customProducts
+      customProducts,
+      itemsOrder
     };
 
     res.status(200).json({
