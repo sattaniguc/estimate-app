@@ -15,7 +15,7 @@
         padding: 0;
       }
       @page { 
-        margin: 8mm; 
+        margin: 6mm; 
         size: A4; 
       }
       
@@ -36,6 +36,17 @@
       table {
         font-size: 9px !important;
       }
+
+      table td, table th {
+        padding: 1px 3px !important;
+        line-height: 1.1 !important;
+      }
+      
+      /* 余白を最小限に */
+      .mb-6 { margin-bottom: 3mm !important; }
+      .mb-4 { margin-bottom: 2mm !important; }
+      .mb-3 { margin-bottom: 2mm !important; }
+      .p-4 { padding: 3mm !important; }
       
       /* ページブレーク制御 */
       table { 
@@ -63,7 +74,7 @@
       const [saved, setSaved] = useState(false);
       const [error, setError] = useState(null);
       const [showPreview, setShowPreview] = useState(false);
-      const [viewMode, setViewMode] = useState('create'); // 'create' or 'view'
+      const [viewMode, setViewMode] = useState('create');
       const [loadedEstimate, setLoadedEstimate] = useState(null);
       const [notionConfig] = useState({
         caseDbId: '2e7c631c2f0580ccb614cb9c82fbee44',
@@ -72,7 +83,7 @@
       });
       const [estimateData, setEstimateData] = useState({
         customerName: '', tradeType: '帳合', showRetailPrice: false, notes: '',
-        items: {}, customPrices: {}, customProducts: []
+        items: {}, customPrices: {}, customProducts: [], itemsOrder: []
       });
       const [beerSelection, setBeerSelection] = useState('');
       const [sausageSelection, setSausageSelection] = useState('');
@@ -86,7 +97,6 @@
         checkUrlParams();
       }, []);
 
-      // URLパラメータをチェックして見積書IDがあれば読み込み
       const checkUrlParams = () => {
         const params = new URLSearchParams(window.location.search);
         const estimateId = params.get('estimateId');
@@ -95,7 +105,6 @@
         }
       };
 
-      // 見積書を読み込む
       const loadEstimate = async (estimateId) => {
         setLoading(true);
         setError(null);
@@ -115,6 +124,7 @@
           
           setLoadedEstimate(data);
           setEstimateData(data.estimateData);
+          setProducts(data.products || products);
           setViewMode('view');
           setShowPreview(true);
           setLoading(false);
@@ -148,44 +158,90 @@
         if (beerSelection === type) {
           setBeerSelection('');
           const newItems = { ...estimateData.items };
-          products.filter(p => p.category === 'ビール').forEach(p => delete newItems[p.id]);
-          setEstimateData(prev => ({ ...prev, items: newItems }));
+          const newOrder = [...(estimateData.itemsOrder || [])];
+          products.filter(p => p.category === 'ビール').forEach(p => {
+            delete newItems[p.id];
+            const idx = newOrder.indexOf(p.id);
+            if (idx > -1) newOrder.splice(idx, 1);
+          });
+          setEstimateData(prev => ({ ...prev, items: newItems, itemsOrder: newOrder }));
           return;
         }
         setBeerSelection(type);
         const newItems = { ...estimateData.items };
+        const newOrder = [...(estimateData.itemsOrder || [])];
         products.filter(p => p.category === 'ビール').forEach(product => {
-          if (type === '瓶のみ' && product.containerType === '瓶') newItems[product.id] = 24;
-          else if (type === '缶のみ' && product.containerType === '缶') newItems[product.id] = 24;
-          else if (type === '瓶+缶' && (product.containerType === '瓶' || product.containerType === '缶')) newItems[product.id] = 24;
-          else delete newItems[product.id];
+          if (type === '瓶のみ' && product.containerType === '瓶') {
+            newItems[product.id] = 24;
+            if (!newOrder.includes(product.id)) newOrder.push(product.id);
+          }
+          else if (type === '缶のみ' && product.containerType === '缶') {
+            newItems[product.id] = 24;
+            if (!newOrder.includes(product.id)) newOrder.push(product.id);
+          }
+          else if (type === '瓶+缶' && (product.containerType === '瓶' || product.containerType === '缶')) {
+            newItems[product.id] = 24;
+            if (!newOrder.includes(product.id)) newOrder.push(product.id);
+          }
+          else {
+            delete newItems[product.id];
+            const idx = newOrder.indexOf(product.id);
+            if (idx > -1) newOrder.splice(idx, 1);
+          }
         });
-        setEstimateData(prev => ({ ...prev, items: newItems }));
+        setEstimateData(prev => ({ ...prev, items: newItems, itemsOrder: newOrder }));
       };
 
       const handleSausageSet = (type) => {
         if (sausageSelection === type) {
           setSausageSelection('');
           const newItems = { ...estimateData.items };
-          products.filter(p => p.category === 'ソーセージ').forEach(p => delete newItems[p.id]);
-          setEstimateData(prev => ({ ...prev, items: newItems }));
+          const newOrder = [...(estimateData.itemsOrder || [])];
+          products.filter(p => p.category === 'ソーセージ').forEach(p => {
+            delete newItems[p.id];
+            const idx = newOrder.indexOf(p.id);
+            if (idx > -1) newOrder.splice(idx, 1);
+          });
+          setEstimateData(prev => ({ ...prev, items: newItems, itemsOrder: newOrder }));
           return;
         }
         setSausageSelection(type);
         const newItems = { ...estimateData.items };
+        const newOrder = [...(estimateData.itemsOrder || [])];
         products.filter(p => p.category === 'ソーセージ').forEach(product => {
-          if (type === '冷蔵のみ' && product.storageMethod === '冷蔵') newItems[product.id] = 20;
-          else if (type === '冷凍のみ' && product.storageMethod === '冷凍') newItems[product.id] = 20;
-          else if (type === '冷蔵+冷凍' && (product.storageMethod === '冷蔵' || product.storageMethod === '冷凍')) newItems[product.id] = 20;
-          else delete newItems[product.id];
+          if (type === '冷蔵のみ' && product.storageMethod === '冷蔵') {
+            newItems[product.id] = 20;
+            if (!newOrder.includes(product.id)) newOrder.push(product.id);
+          }
+          else if (type === '冷凍のみ' && product.storageMethod === '冷凍') {
+            newItems[product.id] = 20;
+            if (!newOrder.includes(product.id)) newOrder.push(product.id);
+          }
+          else if (type === '冷蔵+冷凍' && (product.storageMethod === '冷蔵' || product.storageMethod === '冷凍')) {
+            newItems[product.id] = 20;
+            if (!newOrder.includes(product.id)) newOrder.push(product.id);
+          }
+          else {
+            delete newItems[product.id];
+            const idx = newOrder.indexOf(product.id);
+            if (idx > -1) newOrder.splice(idx, 1);
+          }
         });
-        setEstimateData(prev => ({ ...prev, items: newItems }));
+        setEstimateData(prev => ({ ...prev, items: newItems, itemsOrder: newOrder }));
       };
 
       const handleQtyChange = (id, qty) => {
         const newItems = { ...estimateData.items };
-        if (qty <= 0) delete newItems[id]; else newItems[id] = qty;
-        setEstimateData(prev => ({ ...prev, items: newItems }));
+        const newOrder = [...(estimateData.itemsOrder || [])];
+        if (qty <= 0) {
+          delete newItems[id];
+          const idx = newOrder.indexOf(id);
+          if (idx > -1) newOrder.splice(idx, 1);
+        } else {
+          newItems[id] = qty;
+          if (!newOrder.includes(id)) newOrder.push(id);
+        }
+        setEstimateData(prev => ({ ...prev, items: newItems, itemsOrder: newOrder }));
       };
 
       const handlePriceChange = (id, price) => {
@@ -206,11 +262,13 @@
           janCode: '', 
           taxRate: customProductTaxRate 
         };
+        const newOrder = [...(estimateData.itemsOrder || []), id];
         setEstimateData(prev => ({
           ...prev, 
           customProducts: [...prev.customProducts, prod],
           items: { ...prev.items, [id]: prod.quantity },
-          customPrices: { ...prev.customPrices, [id]: prod.price }
+          customPrices: { ...prev.customPrices, [id]: prod.price },
+          itemsOrder: newOrder
         }));
         setCustomProductName(''); 
         setCustomProductPrice(''); 
@@ -222,7 +280,8 @@
         const newItems = { ...estimateData.items };
         delete newItems[id];
         const newCustom = estimateData.customProducts.filter(p => p.id !== id);
-        setEstimateData(prev => ({ ...prev, items: newItems, customProducts: newCustom }));
+        const newOrder = (estimateData.itemsOrder || []).filter(itemId => itemId !== id);
+        setEstimateData(prev => ({ ...prev, items: newItems, customProducts: newCustom, itemsOrder: newOrder }));
       };
 
       const getPrice = (prod) => {
@@ -249,15 +308,23 @@
 
       const saveToNotion = async () => {
         if (!estimateData.customerName) return alert('顧客名を入力');
-        const items = Object.entries(estimateData.items).filter(([_, qty]) => qty > 0).map(([id, qty]) => {
-          const prod = products.find(p => p.id === id) || estimateData.customProducts.find(p => p.id === id);
-          return { 
-            productId: id.startsWith('custom_') ? null : id, 
-            productName: prod.name, 
-            quantity: qty,
-            customPrice: estimateData.customPrices[id] || null 
-          };
-        });
+        
+        // itemsOrderに基づいて順序を保持
+        const orderedIds = estimateData.itemsOrder || Object.keys(estimateData.items);
+        const items = orderedIds
+          .filter(id => estimateData.items[id] && estimateData.items[id] > 0)
+          .map((id, index) => {
+            const qty = estimateData.items[id];
+            const prod = products.find(p => p.id === id) || estimateData.customProducts.find(p => p.id === id);
+            return { 
+              productId: id.startsWith('custom_') ? null : id, 
+              productName: prod.name, 
+              quantity: qty,
+              customPrice: estimateData.customPrices[id] || null,
+              sortOrder: index
+            };
+          });
+        
         if (items.length === 0) return alert('商品を選択');
         
         setSaving(true); 
@@ -273,16 +340,13 @@
               tradeType: estimateData.tradeType,
               items, 
               notes: estimateData.notes
-              // 見積書URLは保存後に生成するため、ここでは送信しない
             })
           });
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || '保存失敗');
           
-          // 保存成功後、見積書URLを更新
           const estimateUrl = `${window.location.origin}${window.location.pathname}?estimateId=${data.estimateNumber}`;
           
-          // Notion案件にURLを追加で保存
           await fetch('/api/update-estimate-url', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -296,7 +360,6 @@
           setSaved(true);
           alert(`保存完了\n見積番号: ${data.estimateNumber}\n\n見積書URL:\n${estimateUrl}`);
           
-          // URLをクリップボードにコピー
           navigator.clipboard.writeText(estimateUrl).then(() => {
             console.log('URLをクリップボードにコピーしました');
           });
@@ -309,11 +372,15 @@
       };
 
       const totals = calculateTotals();
-      const selected = Object.entries(estimateData.items).filter(([_, qty]) => qty > 0)
-        .map(([id, qty]) => ({ 
-          product: products.find(p => p.id === id) || estimateData.customProducts.find(p => p.id === id), 
-          quantity: qty 
-        }))
+      
+      // itemsOrderに基づいてソート
+      const orderedIds = estimateData.itemsOrder || Object.keys(estimateData.items);
+      const selected = orderedIds
+        .filter(id => estimateData.items[id] && estimateData.items[id] > 0)
+        .map(id => {
+          const prod = products.find(p => p.id === id) || estimateData.customProducts.find(p => p.id === id);
+          return { product: prod, quantity: estimateData.items[id] };
+        })
         .filter(item => item.product);
 
       if (loading) return (
@@ -324,13 +391,12 @@
 
       if (showPreview) {
         const displayDate = loadedEstimate?.createdDate 
-            ? new Date(loadedEstimate.createdDate) 
-            : new Date();
-          
-          const estimateNumber = loadedEstimate?.estimateNumber || 'DRAFT';
-          
-          return (
-            
+          ? new Date(loadedEstimate.createdDate) 
+          : new Date();
+        
+        const estimateNumber = loadedEstimate?.estimateNumber || 'DRAFT';
+        
+        return (
           <div className="min-h-screen bg-white p-4">
             <div className="max-w-4xl mx-auto">
               <div className="print:hidden mb-4 flex gap-2">
@@ -362,8 +428,7 @@
                 )}
               </div>
               
-              <div className="bg-white p-4">
-                {/* ヘッダー */}
+              <div className="bg-white p-4 border border-gray-300">
                 <div className="flex justify-between items-start mb-6">
                   <div className="bg-black text-white px-6 py-2 text-2xl font-bold">
                     御見積書
@@ -376,7 +441,6 @@
                   </div>
                 </div>
 
-                {/* 顧客情報と会社情報 */}
                 <div className="flex justify-between mb-6">
                   <div className="flex-1 pr-8">
                     <div className="border-b-2 border-gray-800 pb-2 mb-4">
@@ -400,8 +464,7 @@
                   </div>
                 </div>
 
-                {/* 見積金額 */}
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex justify-between items-center mb-4">
                   <div className="border-4 border-gray-900 p-3 flex-1 flex justify-between items-center mr-6">
                     <span className="text-base font-bold">御見積金額</span>
                     <span className="text-2xl font-bold">¥{totals.total.toLocaleString()} -</span>
@@ -413,71 +476,66 @@
                   </div>
                 </div>
 
-                {/* 商品テーブル */}
-                <table className="w-full border-collapse border border-gray-300 mb-3 text-base">
+                <table className="w-full border-collapse border-2 border-gray-800 mb-3 text-sm">
                   <thead className="bg-gray-900 text-white">
                     <tr>
-                      <th className="border border-gray-300 px-1 py-1 text-center">品目</th>
-                      <th className="border border-gray-300 px-1 py-1 text-center">数量</th>
-                      <th className="border border-gray-300 px-1 py-1 text-center">単価</th>
-                      <th className="border border-gray-300 px-1 py-1 text-center">金額</th>
-                      <th className="border border-gray-300 px-1 py-1 text-center">賞味期限</th>
-                      <th className="border border-gray-300 px-1 py-1 text-center">JANコード</th>
+                      <th className="border border-gray-600 px-2 py-1 text-left">品目</th>
+                      <th className="border border-gray-600 px-2 py-1 w-16">数量</th>
+                      <th className="border border-gray-600 px-2 py-1 w-24">単価</th>
+                      <th className="border border-gray-600 px-2 py-1 w-28">金額</th>
+                      <th className="border border-gray-600 px-2 py-1 w-20">賞味期限</th>
+                      <th className="border border-gray-600 px-2 py-1 w-28">JANコード</th>
                       {estimateData.showRetailPrice && (
-                        <th className="border border-gray-300 px-1 py-1 text-center">希望小売価格</th>
+                        <th className="border border-gray-600 px-2 py-1 w-24">希望小売価格</th>
                       )}
                     </tr>
                   </thead>
                   <tbody>
                     {selected.map(({ product, quantity }) => (
-                      <tr key={product.id} className="hover:bg-gray-50">
-                        <td className="border border-gray-300 px-1 py-1">{product.name}</td>
-                        <td className="border border-gray-300 px-1 py-1 text-center">{quantity}</td>
-                        <td className="border border-gray-300 px-1 py-1 text-center">
+                      <tr key={product.id}>
+                        <td className="border border-gray-400 px-2 py-1">{product.name}</td>
+                        <td className="border border-gray-400 px-2 py-1 text-center">{quantity}</td>
+                        <td className="border border-gray-400 px-2 py-1 text-right">
                           ¥{getPrice(product).toLocaleString()}
                         </td>
-                        <td className="border border-gray-300 px-1 py-1 text-center">
+                        <td className="border border-gray-400 px-2 py-1 text-right font-medium">
                           ¥{(getPrice(product) * quantity).toLocaleString()}
                         </td>
-                        <td className="border border-gray-300 px-1 py-1 text-center">
+                        <td className="border border-gray-400 px-2 py-1 text-center text-xs">
                           {product.expiryDate || '-'}
                         </td>
-                        <td className="border border-gray-300 px-1 py-1 text-center">
+                        <td className="border border-gray-400 px-2 py-1 text-center text-xs">
                           {product.janCode || '-'}
                         </td>
                         {estimateData.showRetailPrice && (
-                          <td className="border border-gray-300 px-1 py-1 text-center">
+                          <td className="border border-gray-400 px-2 py-1 text-right">
                             {product.retailPrice > 0 ? `¥${product.retailPrice.toLocaleString()}` : '-'}
                           </td>
                         )}
                       </tr>
                     ))}
-                    {/* 空行を追加（最低18行） */}
                     {Array.from({ length: Math.max(0, 18 - selected.length) }).map((_, i) => (
                       <tr key={`empty-${i}`}>
-                        <td className="border border-gray-300 px-1 py-1 text-center">&nbsp;</td>
-                        <td className="border border-gray-300 px-1 py-1 text-center">&nbsp;</td>
-                        <td className="border border-gray-300 px-1 py-1 text-center">&nbsp;</td>
-                        <td className="border border-gray-300 px-1 py-1 text-center">&nbsp;</td>
-                        <td className="border border-gray-300 px-1 py-1 text-center">&nbsp;</td>
-                        <td className="border border-gray-300 px-1 py-1 text-center">&nbsp;</td>
+                        <td className="border border-gray-400 px-2 py-1">&nbsp;</td>
+                        <td className="border border-gray-400 px-2 py-1">&nbsp;</td>
+                        <td className="border border-gray-400 px-2 py-1">&nbsp;</td>
+                        <td className="border border-gray-400 px-2 py-1">&nbsp;</td>
+                        <td className="border border-gray-400 px-2 py-1">&nbsp;</td>
+                        <td className="border border-gray-400 px-2 py-1">&nbsp;</td>
                         {estimateData.showRetailPrice && (
-                          <td className="border border-gray-300 px-1 py-1 text-center">&nbsp;</td>
+                          <td className="border border-gray-400 px-2 py-1">&nbsp;</td>
                         )}
                       </tr>
                     ))}
                   </tbody>
                 </table>
 
-                {/* 合計金額 */}
-                <div className="flex justify-end mb-6">
+                <div className="flex justify-end mb-4">
                   <div className="w-80">
                     <div className="flex justify-between border-b border-gray-400 py-2">
                       <span className="font-medium">小計（税抜）:</span>
                       <span className="font-medium">¥{totals.subtotal.toLocaleString()}</span>
                     </div>
-                    
-                    {/* 消費税を横並びに */}
                     {(totals.tax8 > 0 || totals.tax10 > 0) && (
                       <div className="flex justify-between border-b border-gray-400 py-2">
                         <span className="font-medium">消費税:</span>
@@ -491,7 +549,6 @@
                         </div>
                       </div>
                     )}
-                    
                     <div className="flex justify-between font-bold py-3 text-lg border-t-2 border-gray-800">
                       <span>合計:</span>
                       <span>¥{totals.total.toLocaleString()}</span>
@@ -499,10 +556,11 @@
                   </div>
                 </div>
 
-                {/* 備考 */}
-                <div className="border-t pt-2 mb-2">
-                  <p className="text-xs font-bold mb-1">備考：</p>
-                  <p className="text-xs whitespace-pre-wrap">{estimateData.notes || ''}</p>
+                <div className="border-t-2 border-gray-800 pt-3">
+                  <p className="font-bold mb-2 text-sm">備考：</p>
+                  <p className="text-sm whitespace-pre-wrap leading-relaxed text-gray-700">
+                    {estimateData.notes || ''}
+                  </p>
                 </div>
               </div>
             </div>
