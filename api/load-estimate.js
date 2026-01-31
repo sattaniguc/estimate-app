@@ -67,8 +67,8 @@ module.exports = async (req, res) => {
         id: page.id,
         name: props['商品名']?.title?.[0]?.text?.content || '',
         category: props['カテゴリ']?.select?.name || '',
-        priceWholesale: props['納品価格(帳合)']?.number || 0,
-        priceDirect: props['納品価格(直接)']?.number || 0,
+        priceWholesale: props['納品価格(帳合)']?.number || props['納品価格（帳合）']?.number || 0,
+        priceDirect: props['納品価格(直接)']?.number || props['納品価格（直接）']?.number || 0,
         retailPrice: props['希望小売価格']?.number || 0,
         taxRate: props['消費税率']?.select?.name || '10%',
         expiryDate: props['賞味期限']?.rich_text?.[0]?.text?.content || '',
@@ -81,8 +81,15 @@ module.exports = async (req, res) => {
       // デバッグ: 価格情報をログ出力
       console.log(`商品: ${product.name}, 帳合: ${product.priceWholesale}, 直接: ${product.priceDirect}`);
       
+      // 警告: 価格が0の場合
+      if (product.priceWholesale === 0 && product.priceDirect === 0) {
+        console.warn(`⚠️ 警告: ${product.name} の価格が設定されていません！`);
+      }
+      
       return product;
     });
+    
+    console.log(`商品データ取得成功: ${products.length}件`);
 
     // 明細をsortOrderでソート
     const sortedDetails = detailQuery.results.sort((a, b) => {
