@@ -63,7 +63,7 @@ module.exports = async (req, res) => {
 
     const products = productQuery.results.map(page => {
       const props = page.properties;
-      return {
+      const product = {
         id: page.id,
         name: props['商品名']?.title?.[0]?.text?.content || '',
         category: props['カテゴリ']?.select?.name || '',
@@ -77,6 +77,11 @@ module.exports = async (req, res) => {
         containerType: props['容器/形態']?.select?.name || '',
         storageMethod: props['保存方法']?.select?.name || ''
       };
+      
+      // デバッグ: 価格情報をログ出力
+      console.log(`商品: ${product.name}, 帳合: ${product.priceWholesale}, 直接: ${product.priceDirect}`);
+      
+      return product;
     });
 
     // 明細をsortOrderでソート
@@ -99,32 +104,56 @@ module.exports = async (req, res) => {
       const productRelation = props['商品']?.relation?.[0]?.id;
       const customPrice = props['カスタム価格']?.number;
 
+      console.log(`明細: ${productName}, 数量: ${quantity}, 商品ID: ${productRelation}, カスタム価格: ${customPrice}`);
+
       if (productRelation) {
-        // 既存商品
+        // 既存商品（商品マスタから取得）
+        const product = products.find(p => p.id === productRelation);
+        
+        if (product) {
+          console.log(`  → 商品マスタ検出: ${product.name}, 帳合: ${product.priceWholesale}, 直接: ${product.priceDirect}`);
+        } else {
+          console.log(`  → 警告: 商品マスタに見つかりません (ID: ${productRelation})`);
+        }
+        
         items[productRelation] = quantity;
         itemsOrder.push(productRelation);
-        if (customPrice) {
+        
+        // カスタム価格がある場合は設定
+        if (customPrice && customPrice > 0) {
           customPrices[productRelation] = customPrice;
+          console.log(`  → カスタム価格設定: ${customPrice}`);
         }
+        // カスタム価格がない場合、商品マスタの価格は自動的に使用される（getPrice関数で）
+        
       } else {
-        // カスタム商品
+        // カスタム商品（商品マスタにない商品）
         const customId = `custom_${Date.now()}_${Math.random()}`;
+        
+        // カスタム商品の価格を取得（カスタム価格が設定されている場合のみ）
+        const price = customPrice || 0;
+        
+        console.log(`  → カスタム商品: ${productName}, 価格: ${price}`);
+        
         const customProduct = {
           id: customId,
           name: productName,
-          price: customPrice || 0,
-          priceWholesale: customPrice || 0,
-          priceDirect: customPrice || 0,
+          price: price,
+          priceWholesale: price,
+          priceDirect: price,
           quantity: quantity,
           expiryDate: '',
           janCode: '',
           taxRate: '10%'
         };
+        
         customProducts.push(customProduct);
         items[customId] = quantity;
         itemsOrder.push(customId);
-        if (customPrice) {
-          customPrices[customId] = customPrice;
+        
+        // カスタム商品の場合、価格を必ず設定
+        if (price > 0) {
+          customPrices[customId] = price;
         }
       }
     }
