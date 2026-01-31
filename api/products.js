@@ -21,35 +21,39 @@ module.exports = async (req, res) => {
 
     const notion = new Client({ auth: token });
 
+    // 商品マスタを取得
     const response = await notion.databases.query({
       database_id: productDbId
     });
 
-    console.log('Notion Response:', JSON.stringify(response.results[0], null, 2));
-
     const products = response.results.map(page => {
       const props = page.properties;
       
-      // 安全にプロパティを取得
-      const getName = () => {
-        try {
-          return props['商品名']?.title?.[0]?.text?.content || '';
-        } catch (e) {
-          console.error('商品名取得エラー:', e);
-          return '';
+      // デバッグ：全プロパティ名を出力
+      console.log('=== 商品プロパティ名一覧 ===');
+      Object.keys(props).forEach(key => {
+        console.log(`"${key}" (length: ${key.length})`);
+      });
+      
+      // デバッグ：価格関連のプロパティを詳細出力
+      console.log('=== 価格プロパティ詳細 ===');
+      Object.keys(props).forEach(key => {
+        if (key.includes('納品') || key.includes('価格')) {
+          console.log(`キー: "${key}"`, props[key]);
         }
-      };
-
+      });
+      
       return {
         id: page.id,
-        name: getName(),
+        name: props['商品名']?.title?.[0]?.text?.content || '',
         category: props['カテゴリ']?.select?.name || '',
-        priceWholesale: props['納品価格（帳合）']?.number || 0,
-        priceDirect: props['納品価格（直接）']?.number || 0,
+        priceWholesale: props['納品価格(帳合)']?.number || props['納品価格（帳合）']?.number || 0,
+        priceDirect: props['納品価格(直接)']?.number || props['納品価格（直接）']?.number || 0,
         retailPrice: props['希望小売価格']?.number || 0,
         taxRate: props['消費税率']?.select?.name || '10%',
         expiryDate: props['賞味期限']?.rich_text?.[0]?.text?.content || '',
-        janCode: props['JANコード']?.number?.toString() || '',
+        janCode: props['JANコード']?.number?.toString() || 
+                 props['JANコード']?.rich_text?.[0]?.text?.content || '',
         containerType: props['容器/形態']?.select?.name || '',
         storageMethod: props['保存方法']?.select?.name || ''
       };
