@@ -29,20 +29,6 @@ module.exports = async (req, res) => {
     const products = response.results.map(page => {
       const props = page.properties;
       
-      // デバッグ：全プロパティ名を出力
-      console.log('=== 商品プロパティ名一覧 ===');
-      Object.keys(props).forEach(key => {
-        console.log(`"${key}" (length: ${key.length})`);
-      });
-      
-      // デバッグ：価格関連のプロパティを詳細出力
-      console.log('=== 価格プロパティ詳細 ===');
-      Object.keys(props).forEach(key => {
-        if (key.includes('納品') || key.includes('価格')) {
-          console.log(`キー: "${key}"`, props[key]);
-        }
-      });
-      
       return {
         id: page.id,
         name: props['商品名']?.title?.[0]?.text?.content || '',
