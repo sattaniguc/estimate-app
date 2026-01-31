@@ -6,68 +6,41 @@
   <title>見積書作成アプリ - 株式会社丹後王国ブルワリー</title>
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <style>
-    @media print {
-      .print\:hidden { display: none !important; }
-      
-      body { background: white; margin: 0; padding: 0; }
-      
-      @page { 
-        margin: 5mm 8mm !important; 
-        size: A4; 
-      }
-      
-      /* 1. 黒塗り・白抜きを「枠線」で再現する（背景設定がオフでも有効） */
-      thead {
-        background-color: transparent !important;
-      }
-      
-      thead th {
-        /* 22px分の黒い極太枠線を引くことで背景色のように見せる */
-        box-shadow: inset 0 0 0 1000px #000000 !important;
-        border: 1px solid #000000 !important;
-        color: #ffffff !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }
-  
-      /* 見積書タイトルの黒塗り再現 */
-      .bg-black {
-        box-shadow: inset 0 0 0 1000px #000000 !important;
-        color: #ffffff !important;
-        border: 1px solid #000000 !important;
-      }
-  
-      /* 2. 文字の制御：隠さず、折り返さず、1ページに収める */
-      table {
-        width: 100% !important;
-        table-layout: auto !important; /* コンテンツに合わせて幅を調整 */
-        font-size: 8.5pt !important;   /* 1ページに収まりやすい標準的なサイズ */
-      }
-      
-      table td, table th {
-        padding: 3px 2px !important;
-        line-height: 1.1 !important;
-        white-space: nowrap !important; /* 折り返し禁止 */
-        overflow: visible !important;   /* 文字を隠さない */
-        text-overflow: clip !important;
-        border: 1px solid #000000 !important;
-      }
-  
-      /* 3. 余白を極限まで詰めて高さを確保 */
-      .mb-6 { margin-bottom: 2mm !important; }
-      .mb-4 { margin-bottom: 2mm !important; }
-      .mb-3 { margin-bottom: 1mm !important; }
-      .p-4 { padding: 1mm !important; }
-      
-      /* ロゴや印鑑欄のサイズ調整 */
-      .w-20 { width: 60px !important; height: 60px !important; }
-      .w-16 { width: 50px !important; height: 50px !important; }
+<style>
+  @media print {
+    .print\:hidden { display: none !important; }
+    body { background: white; margin: 0; padding: 0; }
+    @page { margin: 5mm 8mm !important; size: A4; }
+    
+    /* 黒塗り・白抜きの維持 (背景設定OFF対策) */
+    thead th, .bg-black {
+      box-shadow: inset 0 0 0 1000px #000000 !important;
+      color: #ffffff !important;
+      border: 1px solid #000000 !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
-  
-    /* プレビュー表示 */
-    table td, table th { font-size: 14px; }
-  </style>
+
+    table {
+      width: 100% !important;
+      font-size: 9pt !important;
+      table-layout: fixed !important; /* 列幅固定で1枚に収める */
+    }
+    
+    table td, table th {
+      padding: 3px 2px !important;
+      line-height: 1.1 !important;
+      white-space: nowrap !important;
+      overflow: visible !important;
+      border: 1px solid #000000 !important;
+    }
+
+    /* 余白の圧縮 */
+    .mb-6 { margin-bottom: 2mm !important; }
+    .mb-4 { margin-bottom: 2mm !important; }
+    .mb-3 { margin-bottom: 1mm !important; }
+  }
+</style>
 </head>
 
 <body class="bg-gray-50">
@@ -511,10 +484,10 @@
                         </td>
                         <td className="border border-gray-400 px-2 py-1 text-center">{quantity}</td>
                         <td className="border border-gray-400 px-2 py-1 text-right">
-                          ¥{getPrice(product).toLocaleString()}
+                          {getPrice(product).toLocaleString()}
                         </td>
                         <td className="border border-gray-400 px-2 py-1 text-right font-medium">
-                          ¥{(getPrice(product) * quantity).toLocaleString()}
+                          {(getPrice(product) * quantity).toLocaleString()}
                         </td>
                         <td className="border border-gray-400 px-2 py-1 text-center text-xs truncate">
                           {product.expiryDate || '-'}
