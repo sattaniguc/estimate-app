@@ -34,7 +34,7 @@
       
       /* テーブルのフォントサイズ統一 */
       table {
-        font-size: 9px !important;
+        font-size: 10px !important;
       }
       
       table td, table th {
@@ -492,7 +492,7 @@
                     <tr>
                       <th className="border border-gray-600 px-2 py-1 text-left">品目</th>
                       <th className="border border-gray-600 px-2 py-1 w-12">数量</th>
-                      <th className="border border-gray-600 px-2 py-1 w-14">単価</th>
+                      <th className="border border-gray-600 px-2 py-1 w-12">単価</th>
                       <th className="border border-gray-600 px-2 py-1 w-18">金額</th>
                       <th className="border border-gray-600 px-2 py-1 w-24">賞味期限</th>
                       <th className="border border-gray-600 px-2 py-1 w-28">JANコード</th>
@@ -551,7 +551,7 @@
                     </div>
                     {(totals.tax8 > 0 || totals.tax10 > 0) && (
                       <div className="flex justify-between border-b border-gray-400 py-2">
-                        <span className="font-medium">消費税:</span>
+                        <span className="font-medium">消費税：</span>
                         <div className="flex gap-4">
                           {totals.tax8 > 0 && (
                             <span className="font-medium">（8%）¥{totals.tax8.toLocaleString()}</span>
@@ -563,7 +563,7 @@
                       </div>
                     )}
                     <div className="flex justify-between font-bold py-3 text-lg border-t-2 border-gray-800">
-                      <span>合計:</span>
+                      <span>合計：</span>
                       <span>¥{totals.total.toLocaleString()}</span>
                     </div>
                   </div>
