@@ -27,27 +27,48 @@ module.exports = async (req, res) => {
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const random = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
     const estimateNumber = `TKB${year}${month}${random}`;
+    const caseName = `${customerName} - ${estimateNumber}`;
+
+    // 案件管理DBのスキーマを取得してタイトルプロパティを特定
+    const dbInfo = await notion.databases.retrieve({ database_id: caseDbId });
+    const properties = dbInfo.properties;
+    
+    // タイトルプロパティを見つける
+    let titlePropName = null;
+    for (const [propName, propData] of Object.entries(properties)) {
+      if (propData.type === 'title') {
+        titlePropName = propName;
+        break;
+      }
+    }
+
+    // プロパティを構築
+    const caseProperties = {
+      '顧客名': { 
+        rich_text: [{ text: { content: customerName } }] 
+      },
+      '取引形態': { 
+        select: { name: tradeType } 
+      },
+      '見積書番号': {
+        rich_text: [{ text: { content: estimateNumber } }]
+      },
+      'その他記載事項': {
+        rich_text: notes ? [{ text: { content: notes } }] : []
+      }
+    };
+
+    // タイトルプロパティが見つかった場合のみ追加
+    if (titlePropName) {
+      caseProperties[titlePropName] = {
+        title: [{ text: { content: caseName } }]
+      };
+    }
 
     // 案件を作成
     const caseResponse = await notion.pages.create({
       parent: { database_id: caseDbId },
-      properties: {
-        'Name': {
-          title: [{ text: { content: `${customerName} - ${estimateNumber}` } }]
-        },
-        '顧客名': { 
-          rich_text: [{ text: { content: customerName } }] 
-        },
-        '取引形態': { 
-          select: { name: tradeType } 
-        },
-        '見積書番号': {
-          rich_text: [{ text: { content: estimateNumber } }]
-        },
-        'その他記載事項': {
-          rich_text: notes ? [{ text: { content: notes } }] : []
-        }
-      }
+      properties: caseProperties
     });
 
     const caseId = caseResponse.id;
