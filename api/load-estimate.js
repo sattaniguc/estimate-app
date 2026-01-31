@@ -63,7 +63,7 @@ module.exports = async (req, res) => {
 
     const products = productQuery.results.map(page => {
       const props = page.properties;
-      const product = {
+      return {
         id: page.id,
         name: props['商品名']?.title?.[0]?.text?.content || '',
         category: props['カテゴリ']?.select?.name || '',
@@ -77,19 +77,7 @@ module.exports = async (req, res) => {
         containerType: props['容器/形態']?.select?.name || '',
         storageMethod: props['保存方法']?.select?.name || ''
       };
-      
-      // デバッグ: 価格情報をログ出力
-      console.log(`商品: ${product.name}, 帳合: ${product.priceWholesale}, 直接: ${product.priceDirect}`);
-      
-      // 警告: 価格が0の場合
-      if (product.priceWholesale === 0 && product.priceDirect === 0) {
-        console.warn(`⚠️ 警告: ${product.name} の価格が設定されていません！`);
-      }
-      
-      return product;
     });
-    
-    console.log(`商品データ取得成功: ${products.length}件`);
 
     // 明細をsortOrderでソート
     const sortedDetails = detailQuery.results.sort((a, b) => {
@@ -111,27 +99,15 @@ module.exports = async (req, res) => {
       const productRelation = props['商品']?.relation?.[0]?.id;
       const customPrice = props['カスタム価格']?.number;
 
-      console.log(`明細: ${productName}, 数量: ${quantity}, 商品ID: ${productRelation}, カスタム価格: ${customPrice}`);
-
       if (productRelation) {
         // 既存商品（商品マスタから取得）
-        const product = products.find(p => p.id === productRelation);
-        
-        if (product) {
-          console.log(`  → 商品マスタ検出: ${product.name}, 帳合: ${product.priceWholesale}, 直接: ${product.priceDirect}`);
-        } else {
-          console.log(`  → 警告: 商品マスタに見つかりません (ID: ${productRelation})`);
-        }
-        
         items[productRelation] = quantity;
         itemsOrder.push(productRelation);
         
         // カスタム価格がある場合は設定
         if (customPrice && customPrice > 0) {
           customPrices[productRelation] = customPrice;
-          console.log(`  → カスタム価格設定: ${customPrice}`);
         }
-        // カスタム価格がない場合、商品マスタの価格は自動的に使用される（getPrice関数で）
         
       } else {
         // カスタム商品（商品マスタにない商品）
@@ -139,8 +115,6 @@ module.exports = async (req, res) => {
         
         // カスタム商品の価格を取得（カスタム価格が設定されている場合のみ）
         const price = customPrice || 0;
-        
-        console.log(`  → カスタム商品: ${productName}, 価格: ${price}`);
         
         const customProduct = {
           id: customId,
