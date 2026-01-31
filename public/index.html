@@ -19,19 +19,19 @@
       
       /* 2. 用紙サイズと余白のバランス調整 */
       @page { 
-        margin: 10mm 8mm; /* 上下10mm、左右8mmの適度な余白 */
+        margin: 6mm
         size: A4; 
       }
       
       /* 3. テーブルのフォントサイズと高さを画面に近づける */
       table {
-        font-size: 12px !important; /* 10pxから12pxへ拡大 */
+        font-size: 11px !important; /* 10pxから11pxへ拡大 */
         page-break-inside: auto; /* 状況に応じて改ページを許可 */
       }
       
       table td, table th {
-        padding: 6px 4px !important; /* 1pxから6pxへ拡大し、プレビューのゆとりを再現 */
-        line-height: 1.4 !important; /* 1.1から1.4へ拡大 */
+        padding: 3px 4px !important; /* 1pxから3pxへ拡大し、プレビューのゆとりを再現 */
+        line-height: 1.2 !important; /* 1.1から1.2へ拡大 */
         height: auto !important;     /* 18pxの固定を解除し、内容に合わせる */
         white-space: normal !important; /* 折り返しを許可して窮屈さを解消 */
         text-overflow: clip !important;
