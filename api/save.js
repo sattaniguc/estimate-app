@@ -1,14 +1,5 @@
 const { Client } = require('@notionhq/client');
 
-// 見積書番号を生成（TKB + YYYYMM + 5桁ランダム）
-function generateEstimateNumber() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const random = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
-  return `TKB${year}${month}${random}`;
-}
-
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -29,102 +20,85 @@ module.exports = async (req, res) => {
     }
 
     const notion = new Client({ auth: token });
-    const today = new Date().toISOString().split('T')[0];
-    const estimateNumber = generateEstimateNumber();
+
+    // 見積書番号を生成（例: TKB202501XXXXX）
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const random = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
+    const estimateNumber = `TKB${year}${month}${random}`;
 
     // 案件を作成
-    const caseProperties = {
-      '案件名': {
-        title: [{ text: { content: `${customerName} 様_${today}` } }]
-      },
-      '顧客名': {
-        rich_text: [{ text: { content: customerName } }]
-      },
-      '取引形態': {
-        select: { name: tradeType }
-      },
-      'ステータス': {
-        select: { name: '見積中' }
-      },
-      '見積書番号': {
-        rich_text: [{ text: { content: estimateNumber } }]
-      }
-    };
-
-    // その他記載事項を追加
-    if (notes) {
-      caseProperties['その他記載事項'] = {
-        rich_text: [{ text: { content: notes } }]
-      };
-    }
-
     const caseResponse = await notion.pages.create({
       parent: { database_id: caseDbId },
-      properties: caseProperties
+      properties: {
+        '顧客名': { 
+          rich_text: [{ text: { content: customerName } }] 
+        },
+        '取引形態': { 
+          select: { name: tradeType } 
+        },
+        '見積書番号': {
+          rich_text: [{ text: { content: estimateNumber } }]
+        },
+        'その他記載事項': {
+          rich_text: notes ? [{ text: { content: notes } }] : []
+        }
+      }
     });
 
     const caseId = caseResponse.id;
-    console.log('案件作成成功:', caseId, '見積番号:', estimateNumber);
+    console.log(`案件作成成功: ${caseId}, 見積番号: ${estimateNumber}`);
 
-    // 案件明細を一括作成
-    const detailPromises = items.map((item, index) => {
-      console.log(`明細${index + 1}:`, {
-        productId: item.productId,
-        productName: item.productName,
-        quantity: item.quantity,
-        customPrice: item.customPrice
-      });
-
-      const detailProperties = {
-        '明細名': {
-          title: [{ text: { content: item.productName } }]
-        },
-        '案件': {
-          relation: [{ id: caseId }]
-        },
-        '数量': {
-          number: item.quantity
+    // 明細を作成（sortOrderを保存）
+    for (const item of items) {
+      const detailData = {
+        parent: { database_id: detailDbId },
+        properties: {
+          '明細名': { 
+            title: [{ text: { content: item.productName } }] 
+          },
+          '数量': { 
+            number: item.quantity 
+          },
+          '案件': { 
+            relation: [{ id: caseId }] 
+          },
+          '並び順': {
+            number: item.sortOrder || 0
+          }
         }
       };
 
-      // 商品マスタのIDがある場合はリレーション設定
+      // 商品マスタからの商品の場合、リレーション追加
       if (item.productId) {
-        detailProperties['商品'] = {
+        detailData.properties['商品'] = {
           relation: [{ id: item.productId }]
         };
       }
 
-      // カスタム価格がある場合は保存（将来の拡張のため）
+      // カスタム価格がある場合
       if (item.customPrice) {
-        detailProperties['カスタム価格'] = {
+        detailData.properties['カスタム価格'] = {
           number: item.customPrice
         };
       }
 
-      return notion.pages.create({
-        parent: { database_id: detailDbId },
-        properties: detailProperties
-      }).then(result => {
-        console.log(`明細${index + 1}作成成功`);
-        return result;
-      }).catch(error => {
-        console.error(`明細${index + 1}作成失敗:`, error.message);
-        throw error;
-      });
-    });
+      await notion.pages.create(detailData);
+    }
 
-    await Promise.all(detailPromises);
+    console.log(`明細作成成功: ${items.length}件`);
 
-    res.status(200).json({ 
-      success: true, 
-      caseId,
-      estimateNumber,
-      message: '見積書を保存しました' 
+    res.status(200).json({
+      success: true,
+      caseId: caseId,
+      estimateNumber: estimateNumber,
+      message: '見積書の保存に成功しました'
     });
 
   } catch (error) {
     console.error('Save API Error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: error.message,
       details: error.body || error.stack
     });
