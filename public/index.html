@@ -8,7 +8,7 @@
 
   <style>
     @media print {
-      /* 1. 印刷に不要な要素を隠す */
+      /* 印刷に不要な要素を隠す */
       .print\:hidden { display: none !important; }
       
       body { 
@@ -17,47 +17,46 @@
         padding: 0;
       }
       
-      /* 2. 用紙サイズと余白のバランス調整 */
+      /* 1. ページ上下の余白を最小限に設定 */
       @page { 
-        margin: 6mm
+        margin: 5mm 8mm !important; 
         size: A4; 
       }
       
-      /* 3. テーブルのフォントサイズと高さを画面に近づける */
+      /* 2. テーブル全体の制御：1ページに収めるための設定 */
       table {
-        font-size: 11px !important; /* 10pxから11pxへ拡大 */
-        page-break-inside: auto; /* 状況に応じて改ページを許可 */
+        width: 100% !important;
+        font-size: 10px !important; /* 全体的に少し小さくして収容力を高める */
+        table-layout: fixed !important; /* 列幅を固定して計算を安定させる */
       }
       
+      /* 3. 文字の折り返し禁止と1ページ化の徹底 */
       table td, table th {
-        padding: 3px 4px !important; /* 1pxから3pxへ拡大し、プレビューのゆとりを再現 */
-        line-height: 1.2 !important; /* 1.1から1.2へ拡大 */
-        height: auto !important;     /* 18pxの固定を解除し、内容に合わせる */
-        white-space: normal !important; /* 折り返しを許可して窮屈さを解消 */
-        text-overflow: clip !important;
+        padding: 2px 3px !important;
+        line-height: 1.2 !important;
+        height: 22px !important;      /* 1ページに収まる最適な高さ */
+        white-space: nowrap !important; /* 絶対に折り返さない */
+        overflow: hidden !important;    /* 溢れた文字を隠す */
+        text-overflow: ellipsis !important; /* 溢れたら「...」にする */
       }
 
-      /* ヘッダーの背景色を印刷時も維持（ブラウザ設定依存） */
-      thead {
-        background-color: #000000 !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }
+      /* 商品名の列など、特定の列幅を確保したい場合のための調整 */
+      .w-12 { width: 35px !important; }
+      .w-18 { width: 50px !important; }
+      .w-24 { width: 65px !important; }
 
-      /* 4. 余白の調整（mb-6などは画面上のバランスを維持） */
-      .mb-6 { margin-bottom: 6mm !important; }
-      .mb-4 { margin-bottom: 4mm !important; }
-      .mb-3 { margin-bottom: 3mm !important; }
-      .p-4 { padding: 4mm !important; }
+      /* 4. 余白（マージン）を詰めてスペースを捻出 */
+      .mb-6 { margin-bottom: 2mm !important; }
+      .mb-4 { margin-bottom: 2mm !important; }
+      .mb-3 { margin-bottom: 1mm !important; }
+      .p-4 { padding: 2mm !important; }
       
-      /* 改ページ制御の最適化 */
-      tr { 
-        page-break-inside: avoid;
-        page-break-after: auto;
-      }
+      /* 改ページを強制的に防止 */
+      .max-w-4xl { max-width: 100% !important; }
+      #app, .min-h-screen { min-height: auto !important; }
     }
-    
-    /* 通常表示（プレビュー）時の基本サイズ */
+
+    /* 通常表示時 */
     table td, table th {
       font-size: 14px;
     }
