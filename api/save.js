@@ -32,6 +32,9 @@ module.exports = async (req, res) => {
     const caseResponse = await notion.pages.create({
       parent: { database_id: caseDbId },
       properties: {
+        'Name': {
+          title: [{ text: { content: `${customerName} - ${estimateNumber}` } }]
+        },
         '顧客名': { 
           rich_text: [{ text: { content: customerName } }] 
         },
