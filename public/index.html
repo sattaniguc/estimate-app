@@ -32,14 +32,18 @@
         print-color-adjust: exact !important;
       }
       
-      /* テーブルのフォントサイズ */
+      /* テーブルのフォントサイズとパディング */
       table {
         font-size: 9px !important;
       }
-
+      
       table td, table th {
         padding: 1px 3px !important;
         line-height: 1.1 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        height: 18px !important;
       }
       
       /* 余白を最小限に */
@@ -257,6 +261,8 @@
           id, 
           name: customProductName, 
           price: parseFloat(customProductPrice),
+          priceWholesale: parseFloat(customProductPrice),
+          priceDirect: parseFloat(customProductPrice),
           quantity: parseInt(customProductQuantity) || 1, 
           expiryDate: '', 
           janCode: '', 
@@ -309,7 +315,6 @@
       const saveToNotion = async () => {
         if (!estimateData.customerName) return alert('顧客名を入力');
         
-        // itemsOrderに基づいて順序を保持
         const orderedIds = estimateData.itemsOrder || Object.keys(estimateData.items);
         const items = orderedIds
           .filter(id => estimateData.items[id] && estimateData.items[id] > 0)
@@ -373,7 +378,6 @@
 
       const totals = calculateTotals();
       
-      // itemsOrderに基づいてソート
       const orderedIds = estimateData.itemsOrder || Object.keys(estimateData.items);
       const selected = orderedIds
         .filter(id => estimateData.items[id] && estimateData.items[id] > 0)
@@ -428,7 +432,7 @@
                 )}
               </div>
               
-              <div className="bg-white p-4 border border-gray-300">
+              <div className="bg-white p-4">
                 <div className="flex justify-between items-start mb-6">
                   <div className="bg-black text-white px-6 py-2 text-2xl font-bold">
                     御見積書
@@ -480,10 +484,10 @@
                   <thead className="bg-gray-900 text-white">
                     <tr>
                       <th className="border border-gray-600 px-2 py-1 text-left">品目</th>
-                      <th className="border border-gray-600 px-2 py-1 w-16">数量</th>
-                      <th className="border border-gray-600 px-2 py-1 w-24">単価</th>
-                      <th className="border border-gray-600 px-2 py-1 w-28">金額</th>
-                      <th className="border border-gray-600 px-2 py-1 w-20">賞味期限</th>
+                      <th className="border border-gray-600 px-2 py-1 w-12">数量</th>
+                      <th className="border border-gray-600 px-2 py-1 w-20">単価</th>
+                      <th className="border border-gray-600 px-2 py-1 w-24">金額</th>
+                      <th className="border border-gray-600 px-2 py-1 w-24">賞味期限</th>
                       <th className="border border-gray-600 px-2 py-1 w-28">JANコード</th>
                       {estimateData.showRetailPrice && (
                         <th className="border border-gray-600 px-2 py-1 w-24">希望小売価格</th>
@@ -493,7 +497,9 @@
                   <tbody>
                     {selected.map(({ product, quantity }) => (
                       <tr key={product.id}>
-                        <td className="border border-gray-400 px-2 py-1">{product.name}</td>
+                        <td className="border border-gray-400 px-2 py-1 truncate" title={product.name}>
+                          {product.name}
+                        </td>
                         <td className="border border-gray-400 px-2 py-1 text-center">{quantity}</td>
                         <td className="border border-gray-400 px-2 py-1 text-right">
                           ¥{getPrice(product).toLocaleString()}
@@ -501,7 +507,7 @@
                         <td className="border border-gray-400 px-2 py-1 text-right font-medium">
                           ¥{(getPrice(product) * quantity).toLocaleString()}
                         </td>
-                        <td className="border border-gray-400 px-2 py-1 text-center text-xs">
+                        <td className="border border-gray-400 px-2 py-1 text-center text-xs truncate">
                           {product.expiryDate || '-'}
                         </td>
                         <td className="border border-gray-400 px-2 py-1 text-center text-xs">
