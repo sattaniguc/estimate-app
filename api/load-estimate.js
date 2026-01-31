@@ -113,6 +113,8 @@ module.exports = async (req, res) => {
           id: customId,
           name: productName,
           price: customPrice || 0,
+          priceWholesale: customPrice || 0,
+          priceDirect: customPrice || 0,
           quantity: quantity,
           expiryDate: '',
           janCode: '',
