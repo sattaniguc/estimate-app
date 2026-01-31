@@ -32,7 +32,7 @@
         print-color-adjust: exact !important;
       }
       
-      /* テーブルのフォントサイズとパディング */
+      /* テーブルのフォントサイズ統一 */
       table {
         font-size: 9px !important;
       }
@@ -44,6 +44,7 @@
         overflow: hidden !important;
         text-overflow: ellipsis !important;
         height: 18px !important;
+        font-size: 9px !important;
       }
       
       /* 余白を最小限に */
@@ -59,6 +60,11 @@
       tr { 
         page-break-inside: avoid;
       }
+    }
+    
+    /* 通常表示時もテーブルフォントを統一 */
+    table td, table th {
+      font-size: 14px;
     }
   </style>
 </head>
@@ -291,8 +297,9 @@
       };
 
       const getPrice = (prod) => {
+        if (!prod) return 0;
         if (estimateData.customPrices[prod.id]) return estimateData.customPrices[prod.id];
-        return estimateData.tradeType === '帳合' ? prod.priceWholesale : prod.priceDirect;
+        return estimateData.tradeType === '帳合' ? (prod.priceWholesale || 0) : (prod.priceDirect || 0);
       };
 
       const calculateTotals = () => {
@@ -480,17 +487,17 @@
                   </div>
                 </div>
 
-                <table className="w-full border-collapse border-2 border-gray-800 mb-3 text-sm">
+                <table className="w-full border-collapse border-2 border-gray-800 mb-3">
                   <thead className="bg-gray-900 text-white">
                     <tr>
                       <th className="border border-gray-600 px-2 py-1 text-left">品目</th>
                       <th className="border border-gray-600 px-2 py-1 w-12">数量</th>
-                      <th className="border border-gray-600 px-2 py-1 w-20">単価</th>
-                      <th className="border border-gray-600 px-2 py-1 w-24">金額</th>
+                      <th className="border border-gray-600 px-2 py-1 w-14">単価</th>
+                      <th className="border border-gray-600 px-2 py-1 w-18">金額</th>
                       <th className="border border-gray-600 px-2 py-1 w-24">賞味期限</th>
                       <th className="border border-gray-600 px-2 py-1 w-28">JANコード</th>
                       {estimateData.showRetailPrice && (
-                        <th className="border border-gray-600 px-2 py-1 w-24">希望小売価格</th>
+                        <th className="border border-gray-600 px-2 py-1 w-20">希望小売価格</th>
                       )}
                     </tr>
                   </thead>
