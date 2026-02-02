@@ -57,7 +57,7 @@ module.exports = async (req, res) => {
         rich_text: notes ? [{ text: { content: notes } }] : []
       },
       'ステータス': {
-        status: { name: '見積中' }
+        select: { name: '見積中' }
       }
     };
 
