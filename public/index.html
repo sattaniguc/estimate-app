@@ -31,11 +31,13 @@
         print-color-adjust: exact !important;
       }
   
-      /* 見積書タイトルの黒塗り再現 */
+      /* 見積書タイトルの黒塗り白抜き文字 */
       .bg-black {
         box-shadow: inset 0 0 0 1000px #000000 !important;
         color: #ffffff !important;
         border: 1px solid #000000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
       }
   
       /* 2. 文字の制御：隠さず、折り返さず、1ページに収める */
@@ -77,8 +79,15 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script type="text/babel">
     const { useState, useEffect } = React;
-    const LOGO = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzY2NiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE0IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkxPR088L3RleHQ+PC9zdmc+';
-
+    
+    // ロゴ画像をここに設定してください（base64形式、または相対パス）
+    const LOGO = 'data:image/svg+xml;base64,...';
+    
+    // ロゴ画像を差し替える場合は、以下のように画像URLを指定してください：
+    // const LOGO = '/logo.png';  // publicフォルダに配置した画像
+    // または
+    // const LOGO = 'https://example.com/logo.png';  // 外部URL
+    
     function EstimateApp() {
       const [products, setProducts] = useState([]);
       const [loading, setLoading] = useState(true);
