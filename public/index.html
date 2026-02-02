@@ -29,9 +29,11 @@
         color: #ffffff !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
-        /* 高さを固定して、列が増えても変わらないようにする */
+        /* 折り返しを完全に防止 */
         padding: 3px 2px !important;
-        height: auto !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        font-size: 7.5pt !important;    /* ← 小さくした */
         line-height: 1.2 !important;
       }
   
@@ -513,8 +515,8 @@
                       <th className="border border-gray-600 px-2 py-1 w-24">賞味期限</th>
                       <th className="border border-gray-600 px-2 py-1 w-28">JANコード</th>
                       {estimateData.showRetailPrice && (
-                        <th className="border border-gray-600 px-2 py-1 w-20">希望小売価格</th>
-                      )}
+                        <th className="border border-gray-600 px-2 py-1 w-20" 
+                          style={{fontSize: '11px'}}>希望小売価格</th>)}
                     </tr>
                   </thead>
                   <tbody>
