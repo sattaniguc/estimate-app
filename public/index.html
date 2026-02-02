@@ -16,12 +16,28 @@
         size: A4; 
       }
       
-      /* 黒塗り・白抜きを確実に再現 */
-      thead th, .bg-black {
-        box-shadow: inset 0 0 0 1000px #000000 !important;
+      /* テーブルヘッダーの黒塗り・白抜き */
+      thead {
+        background-color: #000000 !important;
+      }
+      
+      thead th {
         background-color: #000000 !important;
         color: #ffffff !important;
         border: 1px solid #000000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        padding: 3px 2px !important;
+        font-size: 8pt !important;
+        line-height: 1.2 !important;
+      }
+  
+      /* 見積書タイトルの黒塗り白抜き文字 */
+      .bg-black {
+        background-color: #000000 !important;
+        color: #ffffff !important;
+        border: 1px solid #000000 !important;
+        -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
   
@@ -397,15 +413,34 @@
 
       const totals = calculateTotals();
       
-      const orderedIds = estimateData.itemsOrder || Object.keys(estimateData.items);
+      // カテゴリ順にソート：ビール → ソーセージ → その他
+      const categoryOrder = { 'ビール': 1, 'ソーセージ': 2, 'その他': 3 };
+      const containerOrder = { '瓶': 1, '缶': 2, '': 3 };
+      
       const selected = orderedIds
         .filter(id => estimateData.items[id] && estimateData.items[id] > 0)
         .map(id => {
           const prod = products.find(p => p.id === id) || estimateData.customProducts.find(p => p.id === id);
           return { product: prod, quantity: estimateData.items[id] };
         })
-        .filter(item => item.product);
-
+        .filter(item => item.product)
+        .sort((a, b) => {
+          // カテゴリでソート
+          const catA = categoryOrder[a.product.category] || 999;
+          const catB = categoryOrder[b.product.category] || 999;
+          if (catA !== catB) return catA - catB;
+          
+          // 同じカテゴリ内では容器/形態でソート（瓶 → 缶）
+          if (a.product.category === 'ビール') {
+            const conA = containerOrder[a.product.containerType] || 999;
+            const conB = containerOrder[b.product.containerType] || 999;
+            if (conA !== conB) return conA - conB;
+          }
+          
+          // 同じカテゴリ・容器内では商品名でソート
+          return a.product.name.localeCompare(b.product.name, 'ja');
+        });
+      
       if (loading) return (
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-blue-600 text-xl">読み込み中...</div>
@@ -556,10 +591,10 @@
 
                 <div className="flex justify-end mb-4">
                   <div className="w-80">
-                    <div className="flex justify-between border-b border-gray-400 py-2">
-                      <span className="font-medium">小計（税抜）:</span>
-                      <span className="font-medium">¥{totals.subtotal.toLocaleString()}</span>
-                    </div>
+                  <div className="flex justify-between border-b border-gray-400 py-2">
+                    <span className="font-medium">小計：</span>
+                    <span className="font-medium">（税抜）¥{totals.subtotal.toLocaleString()}</span>
+                  </div>
                     {(totals.tax8 > 0 || totals.tax10 > 0) && (
                       <div className="flex justify-between border-b border-gray-400 py-2">
                         <span className="font-medium">消費税：</span>
