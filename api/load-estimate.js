@@ -43,6 +43,7 @@ module.exports = async (req, res) => {
     const customerName = caseData.properties['顧客名']?.rich_text?.[0]?.text?.content || '';
     const tradeType = caseData.properties['取引形態']?.select?.name || '帳合';
     const notes = caseData.properties['その他記載事項']?.rich_text?.[0]?.text?.content || '';
+    const showRetailPrice = caseData.properties['希望小売価格表示']?.checkbox || false;
     const createdTime = new Date(caseData.created_time);
 
     // 案件に紐づく明細を取得
@@ -142,7 +143,7 @@ module.exports = async (req, res) => {
     const estimateData = {
       customerName,
       tradeType,
-      showRetailPrice: false,
+      showRetailPrice,
       notes,
       items,
       customPrices,
