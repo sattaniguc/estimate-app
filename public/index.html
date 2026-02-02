@@ -23,18 +23,12 @@
       }
       
       thead th {
-        /* 黒い極太枠線を引くことで背景色のように見せる */
+        /* 22px分の黒い極太枠線を引くことで背景色のように見せる */
         box-shadow: inset 0 0 0 1000px #000000 !important;
         border: 1px solid #000000 !important;
         color: #ffffff !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
-        /* 折り返しを完全に防止 */
-        padding: 3px 2px !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        font-size: 7.5pt !important;    /* ← 小さくした */
-        line-height: 1.2 !important;
       }
   
       /* 見積書タイトルの黒塗り白抜き文字 */
@@ -54,13 +48,12 @@
       }
       
       table td, table th {
-        padding: 2px 2px !important;
-        line-height: 1.0 !important;
-        white-space: nowrap !important;
-        overflow: visible !important;
+        padding: 3px 2px !important;
+        line-height: 1.1 !important;
+        white-space: nowrap !important; /* 折り返し禁止 */
+        overflow: visible !important;   /* 文字を隠さない */
         text-overflow: clip !important;
         border: 1px solid #000000 !important;
-        vertical-align: middle !important;
       }
   
       /* 3. 余白を極限まで詰めて高さを確保 */
@@ -515,8 +508,8 @@
                       <th className="border border-gray-600 px-2 py-1 w-24">賞味期限</th>
                       <th className="border border-gray-600 px-2 py-1 w-28">JANコード</th>
                       {estimateData.showRetailPrice && (
-                        <th className="border border-gray-600 px-2 py-1 w-20" 
-                          style={{fontSize: '11px'}}>希望小売価格</th>)}
+                        <th className="border border-gray-600 px-2 py-1 w-20">希望小売価格</th>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
