@@ -13,7 +13,7 @@ module.exports = async (req, res) => {
 
   try {
     const token = process.env.NOTION_TOKEN || req.body.token;
-    const { caseDbId, detailDbId, customerName, tradeType, items, notes } = req.body;
+    const { caseDbId, detailDbId, customerName, tradeType, items, notes, showRetailPrice } = req.body;
 
     if (!token || !caseDbId || !detailDbId || !customerName || !items) {
       return res.status(400).json({ error: '必須パラメータが不足しています' });
@@ -58,6 +58,9 @@ module.exports = async (req, res) => {
       },
       'ステータス': {
         select: { name: '見積中' }
+      },
+      '希望小売価格表示': {
+        checkbox: showRetailPrice || false
       }
     };
 
