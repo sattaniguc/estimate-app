@@ -107,10 +107,10 @@ module.exports = async (req, res) => {
         };
       }
 
-      // カスタム価格がある場合
-      if (item.customPrice) {
+      // カスタム価格がある場合（フロントエンドから'price'で送信される）
+      if (item.price !== null && item.price !== undefined) {
         detailData.properties['カスタム価格'] = {
-          number: item.customPrice
+          number: item.price
         };
       }
 
