@@ -99,7 +99,7 @@ module.exports = async (req, res) => {
             title: [{ text: { content: item.productName } }] 
           },
           '数量': { 
-            number: item.quantity 
+            number: Number(String(item.quantity).replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0))) 
           },
           '案件': { 
             relation: [{ id: caseId }] 
@@ -120,7 +120,7 @@ module.exports = async (req, res) => {
       // 価格がある場合は必ず保存
       if (item.price !== null && item.price !== undefined && item.price > 0) {
         detailData.properties['適用価格'] = {
-          number: item.price
+          number: Number(String(item.price).replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)))
         };
         console.log(`適用価格を保存: ${item.price}`);
       }
