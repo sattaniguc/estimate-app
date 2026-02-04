@@ -98,7 +98,7 @@ module.exports = async (req, res) => {
       const productName = props['明細名']?.title?.[0]?.text?.content || '';
       const quantity = props['数量']?.number || 0;
       const productRelation = props['商品']?.relation?.[0]?.id;
-      const customPrice = props['カスタム価格']?.number;
+      const customPrice = props['適用価格']?.number;
 
       if (productRelation) {
         // 既存商品（商品マスタから取得）
