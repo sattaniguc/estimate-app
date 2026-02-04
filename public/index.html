@@ -383,15 +383,14 @@
           .map((id, index) => {
             const qty = estimateData.items[id];
             const prod = products.find(p => p.id === id) || estimateData.customProducts.find(p => p.id === id);
-            // カスタム価格が設定されている場合のみ送信
-            const hasCustomPrice = estimateData.customPrices[id] && 
-                                   estimateData.customPrices[id] !== getPrice(prod);
+            // 価格を取得（カスタム価格 or デフォルト価格）
+            const price = getPrice(prod);
             
             return { 
               productId: id.startsWith('custom_') ? null : id, 
               productName: prod.name, 
               quantity: qty,
-              price: hasCustomPrice ? estimateData.customPrices[id] : null,  // ← OK
+              price: price, // ← 常に価格を送信
               sortOrder: index
             };
           });
