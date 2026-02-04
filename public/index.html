@@ -413,6 +413,9 @@
 
       const totals = calculateTotals();
       
+      // orderedIdsを先に定義
+      const orderedIds = estimateData.itemsOrder || Object.keys(estimateData.items);
+      
       // カテゴリ順にソート：ビール → ソーセージ → その他
       const categoryOrder = { 'ビール': 1, 'ソーセージ': 2, 'その他': 3 };
       const containerOrder = { '瓶': 1, '缶': 2, '': 3 };
