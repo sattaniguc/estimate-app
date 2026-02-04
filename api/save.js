@@ -119,10 +119,10 @@ module.exports = async (req, res) => {
 
       // 価格がある場合は必ず保存
       if (item.price !== null && item.price !== undefined && item.price > 0) {
-        detailData.properties['適用価格'] = {
+        detailData.properties['適用単価'] = {
           number: Number(String(item.price).replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)))
         };
-        console.log(`適用価格を保存: ${item.price}`);
+        console.log(`適用単価を保存: ${item.price}`);
       }
 
       await notion.pages.create(detailData);
