@@ -844,13 +844,15 @@
               <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium mb-2">商品名</label>
-                  <input 
-                    type="text" 
-                    className="w-full px-4 py-2 border rounded-lg" 
-                    placeholder="商品名" 
-                    value={customProductName} 
-                    onChange={(e) => setCustomProductName(e.target.value)} 
-                  />
+                    <input 
+                      type="text" 
+                      className="w-full px-4 py-2 border rounded-lg" 
+                      placeholder="商品名" 
+                      value={customProductName} 
+                      onChange={(e) => setCustomProductName(e.target.value)}
+                      lang="ja"           ← 追加：日本語設定
+                      autoComplete="off"  ← 追加：自動補完オフ
+                    />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">単価</label>
