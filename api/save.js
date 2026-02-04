@@ -1,5 +1,11 @@
 const { Client } = require('@notionhq/client');
 
+export const config = {
+  api: {
+    bodyParser: true
+  }
+};
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -12,16 +18,19 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const token = process.env.NOTION_TOKEN || req.body.token;
-    const { caseDbId, detailDbId, customerName, tradeType, items, notes, showRetailPrice } = req.body;
+    console.log('Request body:', req.body);
+    
+    const token = process.env.NOTION_TOKEN || req.body?.token;
+    const { caseDbId, detailDbId, customerName, tradeType, items, notes, showRetailPrice } = req.body || {};
 
     if (!token || !caseDbId || !detailDbId || !customerName || !items) {
+      console.error('Missing parameters:', { token: !!token, caseDbId, detailDbId, customerName, itemsLength: items?.length });
       return res.status(400).json({ error: '必須パラメータが不足しています' });
     }
 
     const notion = new Client({ auth: token });
 
-    // 見積書番号を生成（例: TKB202501XXXXX）
+    // 見積書番号を生成
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -29,7 +38,7 @@ module.exports = async (req, res) => {
     const estimateNumber = `TKB${year}${month}${random}`;
     const caseName = `${customerName} - ${estimateNumber}`;
 
-    // 案件管理DBのスキーマを取得してタイトルプロパティを特定
+    // 案件管理DBのスキーマを取得
     const dbInfo = await notion.databases.retrieve({ database_id: caseDbId });
     const properties = dbInfo.properties;
     
@@ -64,7 +73,6 @@ module.exports = async (req, res) => {
       }
     };
 
-    // タイトルプロパティが見つかった場合のみ追加
     if (titlePropName) {
       caseProperties[titlePropName] = {
         title: [{ text: { content: caseName } }]
@@ -80,8 +88,10 @@ module.exports = async (req, res) => {
     const caseId = caseResponse.id;
     console.log(`案件作成成功: ${caseId}, 見積番号: ${estimateNumber}`);
 
-    // 明細を作成（sortOrderを保存）
+    // 明細を作成
     for (const item of items) {
+      console.log('保存する明細:', item);
+      
       const detailData = {
         parent: { database_id: detailDbId },
         properties: {
@@ -100,18 +110,19 @@ module.exports = async (req, res) => {
         }
       };
 
-      // 商品マスタからの商品の場合、リレーション追加
+      // 商品マスタからの商品の場合
       if (item.productId) {
         detailData.properties['商品'] = {
           relation: [{ id: item.productId }]
         };
       }
 
-      // カスタム価格がある場合（フロントエンドから'price'で送信される）
-      if (item.price !== null && item.price !== undefined) {
+      // 価格がある場合は必ず保存
+      if (item.price !== null && item.price !== undefined && item.price > 0) {
         detailData.properties['カスタム価格'] = {
           number: item.price
         };
+        console.log(`カスタム価格を保存: ${item.price}`);
       }
 
       await notion.pages.create(detailData);
