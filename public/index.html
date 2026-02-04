@@ -85,6 +85,24 @@
   
     /* プレビュー画面（ブラウザ）での見た目 */
     .fit-text { white-space: nowrap; }
+
+    /* プレビュー表示 */
+    table td, table th { font-size: 14px; }
+    
+    /* プレビュー画面でもテーブルヘッダーを黒塗り・白抜きに */
+    thead {
+      background-color: #000000;
+    }
+    
+    thead th {
+      background-color: #000000;
+      color: #ffffff;
+    }
+    
+    .bg-black {
+      background-color: #000000;
+      color: #ffffff;
+    }
   </style>
 </head>
 
@@ -365,11 +383,15 @@
           .map((id, index) => {
             const qty = estimateData.items[id];
             const prod = products.find(p => p.id === id) || estimateData.customProducts.find(p => p.id === id);
+            // カスタム価格が設定されている場合のみ送信
+            const hasCustomPrice = estimateData.customPrices[id] && 
+                                   estimateData.customPrices[id] !== getPrice(prod);
+            
             return { 
               productId: id.startsWith('custom_') ? null : id, 
               productName: prod.name, 
               quantity: qty,
-              customPrice: estimateData.customPrices[id] || null,
+              price: hasCustomPrice ? estimateData.customPrices[id] : null,  // ← OK
               sortOrder: index
             };
           });
