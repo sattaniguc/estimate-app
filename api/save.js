@@ -90,7 +90,14 @@ module.exports = async (req, res) => {
 
     // 明細を作成
     for (const item of items) {
-      console.log('保存する明細:', item);
+      console.log('========================================');
+      console.log('保存する明細:', JSON.stringify(item, null, 2));
+      console.log('productId:', item.productId);
+      console.log('productName:', item.productName);
+      console.log('quantity:', item.quantity);
+      console.log('price:', item.price);
+      console.log('priceの型:', typeof item.price);
+      console.log('========================================');
       
       const detailData = {
         parent: { database_id: detailDbId },
@@ -117,14 +124,18 @@ module.exports = async (req, res) => {
         };
       }
 
-      // 価格がある場合は必ず保存
+      // ★★★ 価格を保存（マスタにない商品 or 価格変更がある場合） ★★★
       if (item.price !== null && item.price !== undefined && item.price > 0) {
+        const priceValue = Number(String(item.price).replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)));
         detailData.properties['適用単価'] = {
-          number: Number(String(item.price).replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)))
+          number: priceValue
         };
-        console.log(`適用単価を保存: ${item.price}`);
+        console.log(`✅ 適用単価を保存: ${priceValue} (元の値: ${item.price})`);
+      } else {
+        console.log(`❌ 適用単価を保存しない: price=${item.price}, null=${item.price === null}, undefined=${item.price === undefined}`);
       }
 
+      console.log('Notionに送信するデータ:', JSON.stringify(detailData, null, 2));
       await notion.pages.create(detailData);
     }
 
