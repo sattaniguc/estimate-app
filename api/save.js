@@ -124,7 +124,7 @@ module.exports = async (req, res) => {
         };
       }
 
-      // ★★★ 価格を保存（マスタにない商品 or 価格変更がある場合） ★★★
+      // ★★★ 価格を保存（すべての商品で必ず保存） ★★★
       if (item.price !== null && item.price !== undefined && item.price > 0) {
         const priceValue = Number(String(item.price).replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)));
         detailData.properties['適用単価'] = {
