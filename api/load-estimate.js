@@ -99,6 +99,7 @@ module.exports = async (req, res) => {
       const quantity = props['数量']?.number || 0;
       const productRelation = props['商品']?.relation?.[0]?.id;
       const customPrice = props['適用単価']?.number;
+      const taxRate = props['消費税率']?.select?.name || '10%';  // ← 追加
 
       if (productRelation) {
         // 既存商品（商品マスタから取得）
@@ -126,7 +127,7 @@ module.exports = async (req, res) => {
           quantity: quantity,
           expiryDate: '',
           janCode: '',
-          taxRate: '10%'
+          taxRate: taxRate  // ← 修正：Notionから読み込んだ値を使用
         };
         
         customProducts.push(customProduct);
