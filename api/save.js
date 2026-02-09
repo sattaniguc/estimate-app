@@ -135,6 +135,14 @@ module.exports = async (req, res) => {
         console.log(`❌ 適用単価を保存しない: price=${item.price}, null=${item.price === null}, undefined=${item.price === undefined}`);
       }
 
+      // ★★★ 消費税率を保存（マスタにない商品のみ） ★★★
+      if (!item.productId && item.taxRate) {
+        detailData.properties['消費税率（直接）'] = {
+          select: { name: item.taxRate }
+        };
+        console.log(`✅ 消費税率（直接）を保存: ${item.taxRate}`);
+      }
+
       console.log('Notionに送信するデータ:', JSON.stringify(detailData, null, 2));
       await notion.pages.create(detailData);
     }
