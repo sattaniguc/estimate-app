@@ -99,7 +99,15 @@ module.exports = async (req, res) => {
       const quantity = props['数量']?.number || 0;
       const productRelation = props['商品']?.relation?.[0]?.id;
       const customPrice = props['適用単価']?.number;
-      const taxRate = props['消費税率']?.select?.name || '10%';  // ← 追加
+      
+      // 消費税率の取得（複数のパターンに対応）
+      const taxRate = 
+        props['消費税率（直接）']?.select?.name ||  // Selectプロパティから
+        props['消費税率']?.formula?.string ||        // Formulaプロパティから
+        props['消費税率']?.string ||                 // 文字列として
+        '10%';                                        // デフォルト
+      
+      console.log(`商品: ${productName}, 消費税率: ${taxRate}`);  // デバッグログ
 
       if (productRelation) {
         // 既存商品（商品マスタから取得）
