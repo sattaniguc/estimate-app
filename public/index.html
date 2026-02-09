@@ -50,7 +50,7 @@
       
       table td, table th {
         padding: 3px 2px !important;
-        line-height: 1.1 !important;
+        line-height: 1.2 !important;
         border: 1px solid #000000 !important;
         white-space: nowrap !important;
         overflow: visible !important;
@@ -447,14 +447,17 @@
       const containerOrder = { '瓶': 1, '缶': 2, '': 3 };
       
       const orderedIds = estimateData.itemsOrder || Object.keys(estimateData.items);
-      const selected = orderedIds
+      let selected = orderedIds
         .filter(id => estimateData.items[id] && estimateData.items[id] > 0)
         .map(id => {
           const prod = products.find(p => p.id === id) || estimateData.customProducts.find(p => p.id === id);
           return { product: prod, quantity: estimateData.items[id] };
         })
-        .filter(item => item.product)
-        .sort((a, b) => {
+        .filter(item => item.product);
+      
+      // 新規作成モードのみカテゴリ順ソート、見積書表示時は保存された順序を維持
+      if (viewMode !== 'view') {
+        selected = selected.sort((a, b) => {
           const catA = categoryOrder[a.product.category] || 999;
           const catB = categoryOrder[b.product.category] || 999;
           if (catA !== catB) return catA - catB;
@@ -467,6 +470,7 @@
           
           return a.product.name.localeCompare(b.product.name, 'ja');
         });
+      }
 
       if (loading) return (
         <div className="flex items-center justify-center min-h-screen">
