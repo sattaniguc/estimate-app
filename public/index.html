@@ -43,49 +43,30 @@
   
       table {
         width: 100% !important;
-        table-layout: fixed !important; /* 列幅を固定して崩れを防止 */
+        table-layout: auto !important;
         border-collapse: collapse !important;
-        font-size: 8pt !important;
+        font-size: 8.5pt !important;
       }
       
       table td, table th {
-        padding: 2px 2px !important;
+        padding: 3px 2px !important;
         line-height: 1.1 !important;
-        height: 22px !important;      /* 行の高さを一定にして1枚に収める */
         border: 1px solid #000000 !important;
         white-space: nowrap !important;
-        overflow: hidden !important;
-      }
-  
-      /* 各列の幅を黄金比で固定（合計100%になるよう調整） */
-      .col-name { width: 45%; text-align: left; }      /* 品目 */
-      .col-qty  { width: 5%;  text-align: center; }    /* 数量 */
-      .col-unit { width: 5%;  text-align: center; }     /* 単価 */
-      .col-price{ width: 7%; text-align: center; }     /* 金額 */
-      .col-date { width: 13%; text-align: center; }    /* 賞味期限 */
-      .col-jan  { width: 15%; text-align: center; }    /* JAN */
-      .col-retail{ width: 10%; text-align: center; }    /* 希望小売 */
-  
-      /* 長い商品名を枠内で自動縮小させる魔法の設定 */
-      .fit-text {
-        display: inline-block;
-        width: 100%;
-        font-size: 8pt;
-      }
-      /* 非常に長い名前の場合、ブラウザが自動でフォントを最小化するよう誘導 */
-      @support (font-size: clamp(6pt, 1vw, 8pt)) {
-        .fit-text { font-size: clamp(5pt, 0.8vw, 8pt); }
+        overflow: visible !important;
+        vertical-align: middle !important;
       }
   
       /* 余白圧縮 */
       .mb-6, .mb-4 { margin-bottom: 2mm !important; }
-      .p-4, .p-3 { padding: 1mm !important; }
-      .text-2xl { font-size: 1.25rem !important; }
+      .mb-3 { margin-bottom: 1mm !important; }
+      .p-4 { padding: 1mm !important; }
+      
+      /* ロゴや印鑑欄のサイズ調整 */
+      .w-20 { width: 60px !important; height: 60px !important; }
+      .w-16 { width: 50px !important; height: 50px !important; }
     }
   
-    /* プレビュー画面（ブラウザ）での見た目 */
-    .fit-text { white-space: nowrap; }
-
     /* プレビュー表示 */
     table td, table th { font-size: 14px; }
     
@@ -273,7 +254,7 @@
           }
           else {
             delete newItems[product.id];
-            const idx = newOrder.indexOf(product.id);
+            const idx = newOrder.indexOf(p.id);
             if (idx > -1) newOrder.splice(idx, 1);
           }
         });
@@ -383,14 +364,15 @@
           .map((id, index) => {
             const qty = estimateData.items[id];
             const prod = products.find(p => p.id === id) || estimateData.customProducts.find(p => p.id === id);
-            // 価格を取得（カスタム価格 or デフォルト価格）
             const price = getPrice(prod);
             
+            // ★★★ 消費税率も送信 ★★★
             return { 
               productId: id.startsWith('custom_') ? null : id, 
               productName: prod.name, 
               quantity: qty,
-              price: price, // ← 常に価格を送信
+              price: price,
+              taxRate: prod.taxRate || '10%',  // ← 追加
               sortOrder: index
             };
           });
@@ -454,14 +436,13 @@
           const matchStorage = product.storageMethod?.toLowerCase().includes(query);
           
           return matchName || matchCategory || matchContainer || matchStorage;
-        }).slice(0, 20); // 最大20件
+        }).slice(0, 20);
       };
 
       const searchResults = searchQuery.trim() ? searchProducts() : [];
 
       const totals = calculateTotals();
       
-      // カテゴリ順にソート：ビール → ソーセージ → その他
       const categoryOrder = { 'ビール': 1, 'ソーセージ': 2, 'その他': 3 };
       const containerOrder = { '瓶': 1, '缶': 2, '': 3 };
       
@@ -581,55 +562,56 @@
                 </div>
 
                 <table className="w-full border-collapse border-2 border-gray-800 mb-3">
-                  <thead>
+                  <thead className="bg-gray-900 text-white">
                     <tr>
-                      <th className="col-name border border-gray-600 px-2 py-1">品目</th>
-                      <th className="col-qty border border-gray-600 px-2 py-1">数量</th>
-                      <th className="col-unit border border-gray-600 px-2 py-1">単価</th>
-                      <th className="col-price border border-gray-600 px-2 py-1">金額</th>
-                      <th className="col-date border border-gray-600 px-2 py-1">賞味期限</th>
-                      <th className="col-jan border border-gray-600 px-2 py-1">JANコード</th>
+                      <th className="border border-gray-600 px-2 py-1 text-left">品目</th>
+                      <th className="border border-gray-600 px-2 py-1 w-12">数量</th>
+                      <th className="border border-gray-600 px-2 py-1 w-12">単価</th>
+                      <th className="border border-gray-600 px-2 py-1 w-18">金額</th>
+                      <th className="border border-gray-600 px-2 py-1 w-24">賞味期限</th>
+                      <th className="border border-gray-600 px-2 py-1 w-28">JANコード</th>
                       {estimateData.showRetailPrice && (
-                        <th className="col-retail border border-gray-600 px-2 py-1">希望小売価格</th>
+                        <th className="border border-gray-600 px-2 py-1 w-20">希望小売価格</th>
                       )}
                     </tr>
                   </thead>
                   <tbody>
                     {selected.map(({ product, quantity }) => (
                       <tr key={product.id}>
-                        <td className="col-name border border-gray-400 px-2 py-1">
-                          <span className="fit-text">{product.name}</span>
+                        <td className="border border-gray-400 px-2 py-1 truncate" title={product.name}>
+                          {product.name}
                         </td>
-                        <td className="col-qty border border-gray-400 px-2 py-1">{quantity}</td>
-                        <td className="col-unit border border-gray-400 px-2 py-1">
+                        <td className="border border-gray-400 px-2 py-1 text-center">{quantity}</td>
+                        <td className="border border-gray-400 px-2 py-1 text-right">
                           {getPrice(product).toLocaleString()}
                         </td>
-                        <td className="col-price border border-gray-400 px-2 py-1 font-medium">
+                        <td className="border border-gray-400 px-2 py-1 text-right font-medium">
                           {(getPrice(product) * quantity).toLocaleString()}
                         </td>
-                        <td className="col-date border border-gray-400 px-2 py-1 text-xs">
+                        <td className="border border-gray-400 px-2 py-1 text-center text-xs truncate">
                           {product.expiryDate || '-'}
                         </td>
-                        <td className="col-jan border border-gray-400 px-2 py-1 text-xs">
+                        <td className="border border-gray-400 px-2 py-1 text-center text-xs">
                           {product.janCode || '-'}
                         </td>
                         {estimateData.showRetailPrice && (
-                          <td className="col-retail border border-gray-400 px-2 py-1 text-right">
-                            {product.retailPrice > 0 ? product.retailPrice.toLocaleString() : '-'}
+                          <td className="border border-gray-400 px-2 py-1 text-right">
+                            {product.retailPrice > 0 ? `¥${product.retailPrice.toLocaleString()}` : '-'}
                           </td>
                         )}
                       </tr>
                     ))}
-                    {/* 空行も同じクラスを適用 */}
                     {Array.from({ length: Math.max(0, 18 - selected.length) }).map((_, i) => (
                       <tr key={`empty-${i}`}>
-                        <td className="col-name border border-gray-400">&nbsp;</td>
-                        <td className="col-qty border border-gray-400">&nbsp;</td>
-                        <td className="col-unit border border-gray-400">&nbsp;</td>
-                        <td className="col-price border border-gray-400">&nbsp;</td>
-                        <td className="col-date border border-gray-400">&nbsp;</td>
-                        <td className="col-jan border border-gray-400">&nbsp;</td>
-                        {estimateData.showRetailPrice && <td className="col-retail border border-gray-400">&nbsp;</td>}
+                        <td className="border border-gray-400 px-2 py-1">&nbsp;</td>
+                        <td className="border border-gray-400 px-2 py-1">&nbsp;</td>
+                        <td className="border border-gray-400 px-2 py-1">&nbsp;</td>
+                        <td className="border border-gray-400 px-2 py-1">&nbsp;</td>
+                        <td className="border border-gray-400 px-2 py-1">&nbsp;</td>
+                        <td className="border border-gray-400 px-2 py-1">&nbsp;</td>
+                        {estimateData.showRetailPrice && (
+                          <td className="border border-gray-400 px-2 py-1">&nbsp;</td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -637,13 +619,13 @@
 
                 <div className="flex justify-end mb-4">
                   <div className="w-80">
-                  <div className="flex justify-between border-b border-gray-400 py-2">
-                    <span className="font-medium">小計：</span>
-                    <span className="font-medium">（税抜）¥{totals.subtotal.toLocaleString()}</span>
-                  </div>
+                    <div className="flex justify-between border-b border-gray-400 py-2">
+                      <span className="font-medium">小計</span>
+                      <span className="font-medium">（税抜）¥{totals.subtotal.toLocaleString()}</span>
+                    </div>
                     {(totals.tax8 > 0 || totals.tax10 > 0) && (
                       <div className="flex justify-between border-b border-gray-400 py-2">
-                        <span className="font-medium">消費税：</span>
+                        <span className="font-medium">消費税</span>
                         <div className="flex gap-4">
                           {totals.tax8 > 0 && (
                             <span className="font-medium">（8%）¥{totals.tax8.toLocaleString()}</span>
@@ -655,14 +637,14 @@
                       </div>
                     )}
                     <div className="flex justify-between font-bold py-3 text-lg border-t-2 border-gray-800">
-                      <span>合計：</span>
+                      <span>合計</span>
                       <span>¥{totals.total.toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="border-t-2 border-gray-800 pt-3">
-                  <p className="font-bold mb-2 text-sm">備考：</p>
+                  <p className="font-bold mb-2 text-sm">備考</p>
                   <p className="text-sm whitespace-pre-wrap leading-relaxed text-gray-700">
                     {estimateData.notes || ''}
                   </p>
@@ -847,7 +829,7 @@
                   <input 
                     type="text" 
                     className="w-full px-4 py-2 border rounded-lg" 
-                    placeholder="商品名" 
+                    placeholder="商品名（日本語入力：半角/全角キー）" 
                     value={customProductName} 
                     onChange={(e) => setCustomProductName(e.target.value)}
                     lang="ja"
@@ -859,13 +841,12 @@
                 <div>
                   <label className="block text-sm font-medium mb-2">単価</label>
                   <input 
-                    type="text"    /* ← textに変更することでIMEの状態（ひらがな）が維持されます */
-                    inputmode="numeric" /* ← スマホで開いた時だけ数字キーボードを出すヒント */
+                    type="text"
+                    inputMode="numeric"
                     className="w-full px-4 py-2 border rounded-lg"
                     placeholder="単価"
                     value={customProductPrice}
                     onChange={(e) => {
-                      // 数字以外を入力できないように制限を入れるとより安全です
                       const val = e.target.value.replace(/[^0-9０-９]/g, ''); 
                       setCustomProductPrice(val);
                     }} 
@@ -888,8 +869,8 @@
                     value={customProductTaxRate} 
                     onChange={(e) => setCustomProductTaxRate(e.target.value)}
                   >
-                    <option value="8%">8%</option>
                     <option value="10%">10%</option>
+                    <option value="8%">8%</option>
                   </select>
                 </div>
                 <button 
@@ -914,6 +895,7 @@
                             {product.category}
                             {product.containerType && ` / ${product.containerType}`}
                             {product.storageMethod && ` / ${product.storageMethod}`}
+                            {product.taxRate && ` / 消費税${product.taxRate}`}
                           </p>
                         </div>
                         <div className="flex items-center gap-3">
