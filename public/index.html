@@ -123,10 +123,47 @@
       const [searchQuery, setSearchQuery] = useState('');
       const [showSearchResults, setShowSearchResults] = useState(false);
 
+      // カテゴリごとのデフォルト備考テキスト
+      const categoryNotes = {
+        'ビール': 'リードタイム：約 5 日 / 1ロット：24本（缶ビール混載不可、瓶ビール混載可能）\n送料：缶1ケース570円（税別）、2-3ケース950円（税別）、瓶1ケース1,100円（税別）\n保管方法：【缶】高温を避け、直射日光の当たらない場所で保管。【瓶】要冷蔵',
+        'ソーセージ': 'リードタイム：約 5 日（白サラミは 10 日）\n1ロット：20 パック～（混載可能）\n賞味期限【冷蔵】ブリーブルスト 11日、その他 21日　【冷凍】90日（白サラミは冷凍不可）'
+      };
+
       useEffect(() => { 
         fetchProducts();
         checkUrlParams();
       }, []);
+
+      // 商品選択時に備考を自動生成
+      useEffect(() => {
+        // 見積書表示モードでは自動生成しない
+        if (viewMode === 'view') return;
+        
+        const orderedIds = estimateData.itemsOrder || Object.keys(estimateData.items);
+        const selectedProducts = orderedIds
+          .filter(id => estimateData.items[id] && estimateData.items[id] > 0)
+          .map(id => products.find(p => p.id === id) || estimateData.customProducts.find(p => p.id === id))
+          .filter(p => p);
+
+        const notesSet = new Set();
+        
+        selectedProducts.forEach(prod => {
+          if (prod.category === 'ビール') {
+            notesSet.add(categoryNotes['ビール']);
+          } else if (prod.category === 'ソーセージ') {
+            notesSet.add(categoryNotes['ソーセージ']);
+          }
+        });
+
+        const autoNotes = Array.from(notesSet).join('\n\n');
+        
+        // ユーザーが手動で編集していない場合のみ自動更新
+        if (estimateData.notes === '' || estimateData.notes.split('\n\n').every(block => Object.values(categoryNotes).includes(block.trim()))) {
+          if (autoNotes !== estimateData.notes) {
+            setEstimateData(prev => ({ ...prev, notes: autoNotes }));
+          }
+        }
+      }, [estimateData.items, estimateData.itemsOrder, products, estimateData.customProducts]);
 
       const checkUrlParams = () => {
         const params = new URLSearchParams(window.location.search);
