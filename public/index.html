@@ -300,11 +300,11 @@
             if (!newOrder.includes(product.id)) newOrder.push(product.id);
           }
           else {
-            delete newItems[product.id];
-            const idx = newOrder.indexOf(p.id);
-            if (idx > -1) newOrder.splice(idx, 1);
-          }
-        });
+              delete newItems[product.id];
+              const idx = newOrder.indexOf(product.id);
+              if (idx > -1) newOrder.splice(idx, 1);
+            }
+          });
         setEstimateData(prev => ({ ...prev, items: newItems, itemsOrder: newOrder }));
       };
 
