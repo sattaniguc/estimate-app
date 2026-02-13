@@ -123,11 +123,21 @@
       const [searchQuery, setSearchQuery] = useState('');
       const [showSearchResults, setShowSearchResults] = useState(false);
       const [notesManuallyEdited, setNotesManuallyEdited] = useState(false);
+      const [selectedStamp, setSelectedStamp] = useState('');
+
+      // 印鑑画像のマッピング（メンバー名 → 画像ファイル名）
+      const stampMapping = {
+        '': '',  // 未選択
+        '山田太郎': '/stamps/yamada.png',
+        '田中花子': '/stamps/tanaka.png',
+        '鈴木一郎': '/stamps/suzuki.png',
+        '佐藤美咲': '/stamps/sato.png'
+      };
 
       // カテゴリごとのデフォルト備考テキスト
       const categoryNotes = {
-        'ビール': 'リードタイム：約 5 日 / 1ロット：24本（【缶】混載不可、【瓶】混載可能）\n送料（税別）：【缶】1ケース 570円、2-3ケース 950円　【瓶】1ケース1,100円 \n保管方法：【缶】高温を避け、直射日光の当たらない場所で保管。【瓶】要冷蔵',
-        'ソーセージ': 'リードタイム：約 5 日（白サラミは 10 日）\n1ロット：20 パック～（混載可能）\n賞味期限：【冷蔵】ブリーブルスト 11日、その他 21日　【冷凍】90日（白サラミは冷凍不可）'
+        'ビール': 'リードタイム：約 5 日 / 1ロット：24本（缶ビール混載不可、瓶ビール混載可能）\n送料：缶1ケース570円（税別）、2-3ケース950円（税別）、瓶1ケース1,100円（税別）\n保管方法：【缶】高温を避け、直射日光の当たらない場所で保管。【瓶】要冷蔵',
+        'ソーセージ': 'リードタイム：約 5 日（白サラミは 10 日）\n1ロット：20 パック～（混載可能）\n賞味期限【冷蔵】ブリーブルスト 11日、その他 21日　【冷凍】90日（白サラミは冷凍不可）'
       };
 
       useEffect(() => { 
@@ -172,7 +182,7 @@
         if (autoNotes !== estimateData.notes) {
           setEstimateData(prev => ({ ...prev, notes: autoNotes }));
         }
-      }, [estimateData.items, products, viewMode, notesManuallyEdited]);
+      }, [estimateData.items, estimateData.itemsOrder, estimateData.customProducts, products, viewMode, notesManuallyEdited]);
 
       const checkUrlParams = () => {
         const params = new URLSearchParams(window.location.search);
@@ -202,6 +212,9 @@
           setLoadedEstimate(data);
           setEstimateData(data.estimateData);
           setProducts(data.products || products);
+          if (data.assignedTo) {
+            setSelectedStamp(data.assignedTo);
+          }
           setViewMode('view');
           setShowPreview(true);
           setNotesManuallyEdited(true); // 読み込んだ見積書の備考は保持
@@ -300,11 +313,11 @@
             if (!newOrder.includes(product.id)) newOrder.push(product.id);
           }
           else {
-              delete newItems[product.id];
-              const idx = newOrder.indexOf(product.id);
-              if (idx > -1) newOrder.splice(idx, 1);
-            }
-          });
+            delete newItems[product.id];
+            const idx = newOrder.indexOf(product.id);
+            if (idx > -1) newOrder.splice(idx, 1);
+          }
+        });
         setEstimateData(prev => ({ ...prev, items: newItems, itemsOrder: newOrder }));
       };
 
@@ -439,7 +452,8 @@
               tradeType: estimateData.tradeType,
               showRetailPrice: estimateData.showRetailPrice,
               items, 
-              notes: estimateData.notes
+              notes: estimateData.notes,
+              assignedTo: selectedStamp  // ← 担当者名を追加
             })
           });
           const data = await res.json();
@@ -611,7 +625,11 @@
                     <span className="text-2xl font-bold">¥{totals.total.toLocaleString()} -</span>
                   </div>
                   <div className="flex gap-1">
-                    <div className="border-2 border-gray-400 w-16 h-16"></div>
+                    <div className="border-2 border-gray-400 w-16 h-16 flex items-center justify-center overflow-hidden">
+                      {selectedStamp && stampMapping[selectedStamp] && (
+                        <img src={stampMapping[selectedStamp]} alt={selectedStamp} className="w-14 h-14 object-contain" />
+                      )}
+                    </div>
                     <div className="border-2 border-gray-400 w-16 h-16"></div>
                     <div className="border-2 border-gray-400 w-16 h-16"></div>
                   </div>
@@ -750,20 +768,46 @@
                     <option value="直接">直接</option>
                   </select>
                 </div>
-                <div className="flex items-end">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={estimateData.showRetailPrice} 
-                      onChange={(e) => setEstimateData(p => ({ ...p, showRetailPrice: e.target.checked }))} 
-                      className="w-4 h-4" 
-                    />
-                    <span className="text-sm">希望小売価格を表示</span>
-                  </label>
+                <div>
+                  <label className="block text-sm font-medium mb-2">担当者</label>
+                  <select 
+                    className="w-full px-4 py-2 border rounded-lg" 
+                    value={selectedStamp} 
+                    onChange={(e) => setSelectedStamp(e.target.value)}
+                  >
+                    <option value="">選択してください</option>
+                    {Object.keys(stampMapping).filter(key => key !== '').map(name => (
+                      <option key={name} value={name}>{name}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
+              <div className="mb-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={estimateData.showRetailPrice} 
+                    onChange={(e) => setEstimateData(p => ({ ...p, showRetailPrice: e.target.checked }))} 
+                    className="w-4 h-4" 
+                  />
+                  <span className="text-sm">希望小売価格を表示</span>
+                </label>
+              </div>
               <div>
-                <label className="block text-sm font-medium mb-2">その他記載事項（見積書下部に表示）</label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-sm font-medium">その他記載事項（見積書下部に表示）</label>
+                  {notesManuallyEdited && (
+                    <button
+                      className="text-xs px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded"
+                      onClick={() => {
+                        setNotesManuallyEdited(false);
+                        // 自動生成を再トリガー
+                      }}
+                    >
+                      🔄 自動生成に戻す
+                    </button>
+                  )}
+                </div>
                 <textarea 
                   className="w-full px-4 py-2 border rounded-lg" 
                   rows="3" 
