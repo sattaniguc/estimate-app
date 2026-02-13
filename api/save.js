@@ -21,7 +21,7 @@ module.exports = async (req, res) => {
     console.log('Request body:', req.body);
     
     const token = process.env.NOTION_TOKEN || req.body?.token;
-    const { caseDbId, detailDbId, customerName, tradeType, items, notes, showRetailPrice } = req.body || {};
+    const { caseDbId, detailDbId, customerName, tradeType, items, notes, showRetailPrice, assignedTo } = req.body || {};
 
     if (!token || !caseDbId || !detailDbId || !customerName || !items) {
       console.error('Missing parameters:', { token: !!token, caseDbId, detailDbId, customerName, itemsLength: items?.length });
@@ -72,6 +72,13 @@ module.exports = async (req, res) => {
         checkbox: showRetailPrice || false
       }
     };
+
+    // 担当者が選択されている場合は追加
+    if (assignedTo) {
+      caseProperties['担当者'] = {
+        rich_text: [{ text: { content: assignedTo } }]
+      };
+    }
 
     if (titlePropName) {
       caseProperties[titlePropName] = {
