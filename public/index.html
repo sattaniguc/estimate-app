@@ -128,10 +128,13 @@
       // 印鑑画像のマッピング（メンバー名 → 画像ファイル名）
       const stampMapping = {
         '': '',  // 未選択
-        '山田太郎': '/stamps/yamada.png',
-        '田中花子': '/stamps/tanaka.png',
-        '鈴木一郎': '/stamps/suzuki.png',
-        '佐藤美咲': '/stamps/sato.png'
+        '上田祐貴': '/stamps/ueda.png',
+        '山口智史': '/stamps/yamaguchi.png',
+        '大木隆広': '/stamps/ooki.png',
+        '稲岡孝俊': '/stamps/inaoka.png',
+        '安藤百合香': '/stamps/andou.png',
+        '米澤悠那': '/stamps/yonezawa.png',
+        '谷口知志': '/stamps/taniguchi.png'
       };
 
       // カテゴリごとのデフォルト備考テキスト
@@ -630,8 +633,16 @@
                         <img src={stampMapping[selectedStamp]} alt={selectedStamp} className="w-14 h-14 object-contain" />
                       )}
                     </div>
-                    <div className="border-2 border-gray-400 w-16 h-16"></div>
-                    <div className="border-2 border-gray-400 w-16 h-16"></div>
+                    <div className="border-2 border-gray-400 w-16 h-16 flex items-center justify-center overflow-hidden">
+                      {selectedStamp && stampMapping[selectedStamp] && (
+                        <img src={stampMapping[selectedStamp]} alt={selectedStamp} className="w-14 h-14 object-contain" />
+                      )}
+                    </div>
+                    <div className="border-2 border-gray-400 w-16 h-16 flex items-center justify-center overflow-hidden">
+                      {selectedStamp && stampMapping[selectedStamp] && (
+                        <img src={stampMapping[selectedStamp]} alt={selectedStamp} className="w-14 h-14 object-contain" />
+                      )}
+                    </div>
                   </div>
                 </div>
 
