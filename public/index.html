@@ -627,26 +627,10 @@
                     <span className="text-base font-bold">御見積金額</span>
                     <span className="text-2xl font-bold">¥{totals.total.toLocaleString()} -</span>
                   </div>
-                    <div className="flex gap-1">
-                      <div className="border-2 border-gray-400 w-16 h-16"></div>
-                      <div className="border-2 border-gray-400 w-16 h-16"></div>
-                      <div className="border-2 border-gray-400 w-16 h-16 flex items-center justify-center overflow-hidden">
-                        {selectedStamp && stampMapping[selectedStamp] && (
-                          <img src={stampMapping[selectedStamp]} alt={selectedStamp} className="w-14 h-14 object-contain" />
-                        )}
-                      </div>
-                  </div>
+                  
                   <div className="flex gap-1">
-                    <div className="border-2 border-gray-400 w-16 h-16 flex items-center justify-center overflow-hidden">
-                      {selectedStamp && stampMapping[selectedStamp] && (
-                        <img src={stampMapping[selectedStamp]} alt={selectedStamp} className="w-14 h-14 object-contain" />
-                      )}
-                    </div>
-                    <div className="border-2 border-gray-400 w-16 h-16 flex items-center justify-center overflow-hidden">
-                      {selectedStamp && stampMapping[selectedStamp] && (
-                        <img src={stampMapping[selectedStamp]} alt={selectedStamp} className="w-14 h-14 object-contain" />
-                      )}
-                    </div>
+                    <div className="border-2 border-gray-400 w-16 h-16"></div>
+                    <div className="border-2 border-gray-400 w-16 h-16"></div>
                     <div className="border-2 border-gray-400 w-16 h-16 flex items-center justify-center overflow-hidden">
                       {selectedStamp && stampMapping[selectedStamp] && (
                         <img src={stampMapping[selectedStamp]} alt={selectedStamp} className="w-14 h-14 object-contain" />
