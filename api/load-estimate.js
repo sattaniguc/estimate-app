@@ -44,6 +44,7 @@ module.exports = async (req, res) => {
     const tradeType = caseData.properties['取引形態']?.select?.name || '帳合';
     const notes = caseData.properties['その他記載事項']?.rich_text?.[0]?.text?.content || '';
     const showRetailPrice = caseData.properties['希望小売価格表示']?.checkbox || false;
+    const assignedTo = caseData.properties['担当者']?.rich_text?.[0]?.text?.content || '';
     const createdTime = new Date(caseData.created_time);
 
     // 案件に紐づく明細を取得
@@ -166,7 +167,8 @@ module.exports = async (req, res) => {
       caseId,
       createdDate: createdTime,
       estimateData,
-      products
+      products,
+      assignedTo  // ← 担当者名を追加
     });
 
   } catch (error) {
