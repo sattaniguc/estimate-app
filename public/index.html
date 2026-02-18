@@ -391,6 +391,55 @@
         setEstimateData(prev => ({ ...prev, items: newItems, itemsOrder: newOrder }));
       };
 
+      const [beefSelection, setBeefSelection] = useState(false);
+      const [dairySelection, setDairySelection] = useState(false);
+
+      const handleBeefSet = () => {
+        if (beefSelection) {
+          setBeefSelection(false);
+          const newItems = { ...estimateData.items };
+          const newOrder = [...(estimateData.itemsOrder || [])];
+          products.filter(p => p.category === 'ビーフ').forEach(p => {
+            delete newItems[p.id];
+            const idx = newOrder.indexOf(p.id);
+            if (idx > -1) newOrder.splice(idx, 1);
+          });
+          setEstimateData(prev => ({ ...prev, items: newItems, itemsOrder: newOrder }));
+          return;
+        }
+        setBeefSelection(true);
+        const newItems = { ...estimateData.items };
+        const newOrder = [...(estimateData.itemsOrder || [])];
+        products.filter(p => p.category === 'ビーフ').forEach(product => {
+          newItems[product.id] = 1;
+          if (!newOrder.includes(product.id)) newOrder.push(product.id);
+        });
+        setEstimateData(prev => ({ ...prev, items: newItems, itemsOrder: newOrder }));
+      };
+
+      const handleDairySet = () => {
+        if (dairySelection) {
+          setDairySelection(false);
+          const newItems = { ...estimateData.items };
+          const newOrder = [...(estimateData.itemsOrder || [])];
+          products.filter(p => p.category === '乳製品').forEach(p => {
+            delete newItems[p.id];
+            const idx = newOrder.indexOf(p.id);
+            if (idx > -1) newOrder.splice(idx, 1);
+          });
+          setEstimateData(prev => ({ ...prev, items: newItems, itemsOrder: newOrder }));
+          return;
+        }
+        setDairySelection(true);
+        const newItems = { ...estimateData.items };
+        const newOrder = [...(estimateData.itemsOrder || [])];
+        products.filter(p => p.category === '乳製品').forEach(product => {
+          newItems[product.id] = 1;
+          if (!newOrder.includes(product.id)) newOrder.push(product.id);
+        });
+        setEstimateData(prev => ({ ...prev, items: newItems, itemsOrder: newOrder }));
+      };
+
       const handleQtyChange = (id, qty) => {
         const newItems = { ...estimateData.items };
         const newOrder = [...(estimateData.itemsOrder || [])];
@@ -889,7 +938,7 @@
             
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
               <h2 className="text-xl font-bold mb-4">商品セット選択</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div>
                   <h3 className="font-medium mb-3">ビール（基本数量：24）</h3>
                   <div className="flex flex-col gap-2">
@@ -924,6 +973,36 @@
                         {t} {sausageSelection === t && '(クリックで解除)'}
                       </button>
                     ))}
+                  </div>
+                </div>
+                <div>
+                  <h3 className="font-medium mb-3">ビーフ（基本数量：1）</h3>
+                  <div className="flex flex-col gap-2">
+                    <button 
+                      className={`px-6 py-3 rounded-lg font-medium transition ${
+                        beefSelection 
+                          ? 'bg-red-600 text-white' 
+                          : 'bg-gray-100 hover:bg-gray-200'
+                      }`} 
+                      onClick={handleBeefSet}
+                    >
+                      すべて選択 {beefSelection && '(クリックで解除)'}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="font-medium mb-3">乳製品（基本数量：1）</h3>
+                  <div className="flex flex-col gap-2">
+                    <button 
+                      className={`px-6 py-3 rounded-lg font-medium transition ${
+                        dairySelection 
+                          ? 'bg-yellow-600 text-white' 
+                          : 'bg-gray-100 hover:bg-gray-200'
+                      }`} 
+                      onClick={handleDairySet}
+                    >
+                      すべて選択 {dairySelection && '(クリックで解除)'}
+                    </button>
                   </div>
                 </div>
               </div>
