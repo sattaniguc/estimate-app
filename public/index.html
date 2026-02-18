@@ -141,28 +141,29 @@
       const categoryColumns = {
         'ビール': [
           { key: 'name', label: '商品名', getValue: (p) => p.name, align: 'left' },
-          { key: 'containerType', label: '容器', getValue: (p) => p.containerType || '-', align: 'center' },
+          { key: 'volume', label: '容量', getValue: (p) => p.specification || '-', align: 'center' },
+          { key: 'quantity', label: '数量', getValue: (p, tradeType, showRetail, qty) => qty, align: 'center' },
           { key: 'unitPrice', label: '単価', getValue: (p, tradeType, showRetail) => {
             const price = tradeType === '帳合' ? p.priceWholesale : p.priceDirect;
             return `¥${price?.toLocaleString() || 0}`;
           }, align: 'center'},
-          { key: 'retailPrice', label: '希望小売価格', getValue: (p) => p.price ? `¥${p.price.toLocaleString()}` : '-', showRetail: true, align: 'center' },
-          { key: 'quantity', label: '数量', getValue: (p, tradeType, showRetail, qty) => qty, align: 'center' },
-          { key: 'subtotal', label: '小計', getValue: (p, tradeType, showRetail, qty) => {
+          { key: 'amount', label: '金額', getValue: (p, tradeType, showRetail, qty) => {
             const price = tradeType === '帳合' ? p.priceWholesale : p.priceDirect;
             return `¥${((price || 0) * qty).toLocaleString()}`;
           }, align: 'center'},
-          { key: 'janCode', label: 'JANコード', getValue: (p) => p.janCode || '-', align: 'center' }
+          { key: 'expiryDate', label: '賞味期限', getValue: (p) => p.expiryDate || '-', align: 'center' },
+          { key: 'janCode', label: 'JANコード', getValue: (p) => p.janCode || '-', align: 'center' },
+          { key: 'retailPrice', label: '希望小売価格', getValue: (p) => p.price ? `¥${p.price.toLocaleString()}` : '-', showRetail: true, align: 'center' }
         ],
         'ソーセージ': [
           { key: 'name', label: '品名', getValue: (p) => p.name, align: 'left' },
-          { key: 'storageMethod', label: '保存方法', getValue: (p) => p.storageMethod || '-', align: 'center' },
+          { key: 'volume', label: '容量', getValue: (p) => p.specification || '-', align: 'center' },
+          { key: 'quantity', label: '数量', getValue: (p, tradeType, showRetail, qty) => qty, align: 'center' },
           { key: 'unitPrice', label: '単価', getValue: (p, tradeType) => {
             const price = tradeType === '帳合' ? p.priceWholesale : p.priceDirect;
             return `¥${price?.toLocaleString() || 0}`;
           }, align: 'center'},
-          { key: 'quantity', label: '数量', getValue: (p, tradeType, showRetail, qty) => qty, align: 'center' },
-          { key: 'subtotal', label: '小計', getValue: (p, tradeType, showRetail, qty) => {
+          { key: 'amount', label: '金額', getValue: (p, tradeType, showRetail, qty) => {
             const price = tradeType === '帳合' ? p.priceWholesale : p.priceDirect;
             return `¥${((price || 0) * qty).toLocaleString()}`;
           }, align: 'center'},
@@ -844,6 +845,7 @@
                     </div>
                   </div>
                 </div>
+
                 <div className="border-t-2 border-gray-800 pt-3">
                   <p className="font-bold mb-2 text-sm">備考</p>
                   <p className="text-sm whitespace-pre-wrap leading-relaxed text-gray-700">
