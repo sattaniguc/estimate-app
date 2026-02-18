@@ -137,10 +137,77 @@
         '谷口知志': '/stamps/taniguchi.png'
       };
 
+      // カテゴリごとの表示列定義
+      const categoryColumns = {
+        'ビール': [
+          { key: 'name', label: '商品名', getValue: (p) => p.name },
+          { key: 'containerType', label: '容器', getValue: (p) => p.containerType || '-' },
+          { key: 'unitPrice', label: '単価', getValue: (p, tradeType, showRetail) => {
+            const price = tradeType === '帳合' ? p.priceWholesale : p.priceDirect;
+            return `¥${price?.toLocaleString() || 0}`;
+          }},
+          { key: 'retailPrice', label: '希望小売価格', getValue: (p) => p.price ? `¥${p.price.toLocaleString()}` : '-', showRetail: true },
+          { key: 'quantity', label: '数量', getValue: (p, tradeType, showRetail, qty) => qty },
+          { key: 'subtotal', label: '小計', getValue: (p, tradeType, showRetail, qty) => {
+            const price = tradeType === '帳合' ? p.priceWholesale : p.priceDirect;
+            return `¥${((price || 0) * qty).toLocaleString()}`;
+          }}
+        ],
+        'ソーセージ': [
+          { key: 'name', label: '品名', getValue: (p) => p.name },
+          { key: 'storageMethod', label: '保存方法', getValue: (p) => p.storageMethod || '-' },
+          { key: 'unitPrice', label: '単価', getValue: (p, tradeType) => {
+            const price = tradeType === '帳合' ? p.priceWholesale : p.priceDirect;
+            return `¥${price?.toLocaleString() || 0}`;
+          }},
+          { key: 'quantity', label: '数量', getValue: (p, tradeType, showRetail, qty) => qty },
+          { key: 'subtotal', label: '小計', getValue: (p, tradeType, showRetail, qty) => {
+            const price = tradeType === '帳合' ? p.priceWholesale : p.priceDirect;
+            return `¥${((price || 0) * qty).toLocaleString()}`;
+          }}
+        ],
+        'ビーフ': [
+          { key: 'name', label: '品名', getValue: (p) => p.name },
+          { key: 'pricePerKg', label: '単価/㎏', getValue: (p, tradeType) => {
+            const price = tradeType === '帳合' ? p.priceWholesale : p.priceDirect;
+            return `¥${price?.toLocaleString() || 0}`;
+          }},
+          { key: 'blockWeight', label: 'ブロック重量', getValue: (p) => p.blockWeight ? `${p.blockWeight}㎏` : '-' },
+          { key: 'yieldRate', label: '歩留率', getValue: (p) => p.yieldRate ? `${p.yieldRate}%` : '-' }
+        ],
+        '乳製品': [
+          { key: 'name', label: '品名', getValue: (p) => p.name },
+          { key: 'lotSize', label: '1ロット', getValue: (p) => p.deliveryUnit || '-' },
+          { key: 'unitPrice', label: '単価', getValue: (p, tradeType) => {
+            const price = tradeType === '帳合' ? p.priceWholesale : p.priceDirect;
+            return `¥${price?.toLocaleString() || 0}`;
+          }},
+          { key: 'amount', label: '金額', getValue: (p, tradeType, showRetail, qty) => {
+            const price = tradeType === '帳合' ? p.priceWholesale : p.priceDirect;
+            return `¥${((price || 0) * qty).toLocaleString()}`;
+          }},
+          { key: 'expiryDate', label: '賞味期限', getValue: (p) => p.expiryDate || '-' }
+        ],
+        '焼酎': [
+          { key: 'name', label: '商品名', getValue: (p) => p.name },
+          { key: 'alcoholContent', label: 'アルコール度数', getValue: (p) => p.abv ? `${p.abv}%` : '-' },
+          { key: 'volume', label: '容量', getValue: (p) => p.specification || '-' },
+          { key: 'unitPrice', label: '単価', getValue: (p, tradeType) => {
+            const price = tradeType === '帳合' ? p.priceWholesale : p.priceDirect;
+            return `¥${price?.toLocaleString() || 0}`;
+          }},
+          { key: 'retailPrice', label: '希望小売価格', getValue: (p) => p.price ? `¥${p.price.toLocaleString()}` : '-', showRetail: true },
+          { key: 'janCode', label: 'JANコード', getValue: (p) => p.janCode || '-' }
+        ]
+      };
+
       // カテゴリごとのデフォルト備考テキスト
       const categoryNotes = {
         'ビール': 'リードタイム：約 5 日 / 1ロット：24本（缶ビール混載不可、瓶ビール混載可能）\n送料：缶1ケース570円（税別）、2-3ケース950円（税別）、瓶1ケース1,100円（税別）\n保管方法：【缶】高温を避け、直射日光の当たらない場所で保管。【瓶】要冷蔵',
-        'ソーセージ': 'リードタイム：約 5 日（白サラミは 10 日）\n1ロット：20 パック～（混載可能）\n賞味期限【冷蔵】ブリーブルスト 11日、その他 21日　【冷凍】90日（白サラミは冷凍不可）'
+        'ソーセージ': 'リードタイム：約 5 日（白サラミは 10 日）\n1ロット：20 パック～（混載可能）\n賞味期限【冷蔵】ブリーブルスト 11日、その他 21日　【冷凍】90日（白サラミは冷凍不可）',
+        'ビーフ': 'リードタイム：約 1 週間、温度帯：チルド、賞味期限：D+35日 \n中・友バラはセット、ブリスケ・三角セット \n送料：120サイズ 2,000円（税別）',
+        '乳製品': 'リードタイム：約 5 日、温度帯：冷蔵 \n4 ケース（120サイズ）までは、1個口で発送可能（送料：1,550円（税別））',
+        '焼酎': 'リードタイム：約 5 日営業日 \n1ケース：950円（税別） ※ 4 ケース以上のご注文（配送先1か所）で、送料無料。 \n混載可能'
       };
 
       useEffect(() => { 
@@ -163,19 +230,19 @@
 
         console.log('選択された商品:', selectedProducts.map(p => `${p.name} (${p.category})`));
 
-        const notesArray = [];
-        let hasBeer = false;
-        let hasSausage = false;
-        
+        // カテゴリごとに1回だけ備考を追加
+        const categoriesPresent = new Set();
         selectedProducts.forEach(prod => {
-          if (prod.category === 'ビール' && !hasBeer) {
-            notesArray.push(categoryNotes['ビール']);
-            hasBeer = true;
-            console.log('ビール備考を追加');
-          } else if (prod.category === 'ソーセージ' && !hasSausage) {
-            notesArray.push(categoryNotes['ソーセージ']);
-            hasSausage = true;
-            console.log('ソーセージ備考を追加');
+          if (prod.category) {
+            categoriesPresent.add(prod.category);
+          }
+        });
+
+        const notesArray = [];
+        categoriesPresent.forEach(category => {
+          if (categoryNotes[category]) {
+            notesArray.push(categoryNotes[category]);
+            console.log(`${category}備考を追加`);
           }
         });
 
@@ -507,7 +574,14 @@
 
       const totals = calculateTotals();
       
-      const categoryOrder = { 'ビール': 1, 'ソーセージ': 2, 'その他': 3 };
+      const categoryOrder = { 
+        'ビール': 1, 
+        'ソーセージ': 2, 
+        'ビーフ': 3,
+        '乳製品': 4,
+        '焼酎': 5,
+        'その他': 99 
+      };
       const containerOrder = { '瓶': 1, '缶': 2, '': 3 };
       
       const orderedIds = estimateData.itemsOrder || Object.keys(estimateData.items);
@@ -627,7 +701,6 @@
                     <span className="text-base font-bold">御見積金額</span>
                     <span className="text-2xl font-bold">¥{totals.total.toLocaleString()} -</span>
                   </div>
-                  
                   <div className="flex gap-1">
                     <div className="border-2 border-gray-400 w-16 h-16"></div>
                     <div className="border-2 border-gray-400 w-16 h-16"></div>
@@ -639,61 +712,50 @@
                   </div>
                 </div>
 
-                <table className="w-full border-collapse border-2 border-gray-800 mb-3">
-                  <thead className="bg-gray-900 text-white">
-                    <tr>
-                      <th className="border border-gray-600 px-2 py-1 text-left">品目</th>
-                      <th className="border border-gray-600 px-2 py-1 w-12">数量</th>
-                      <th className="border border-gray-600 px-2 py-1 w-12">単価</th>
-                      <th className="border border-gray-600 px-2 py-1 w-18">金額</th>
-                      <th className="border border-gray-600 px-2 py-1 w-24">賞味期限</th>
-                      <th className="border border-gray-600 px-2 py-1 w-28">JANコード</th>
-                      {estimateData.showRetailPrice && (
-                        <th className="border border-gray-600 px-2 py-1 w-20">希望小売価格</th>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {selected.map(({ product, quantity }) => (
-                      <tr key={product.id}>
-                        <td className="border border-gray-400 px-2 py-1 truncate" title={product.name}>
-                          {product.name}
-                        </td>
-                        <td className="border border-gray-400 px-2 py-1 text-center">{quantity}</td>
-                        <td className="border border-gray-400 px-2 py-1 text-right">
-                          {getPrice(product).toLocaleString()}
-                        </td>
-                        <td className="border border-gray-400 px-2 py-1 text-right font-medium">
-                          {(getPrice(product) * quantity).toLocaleString()}
-                        </td>
-                        <td className="border border-gray-400 px-2 py-1 text-center text-xs truncate">
-                          {product.expiryDate || '-'}
-                        </td>
-                        <td className="border border-gray-400 px-2 py-1 text-center text-xs">
-                          {product.janCode || '-'}
-                        </td>
-                        {estimateData.showRetailPrice && (
-                          <td className="border border-gray-400 px-2 py-1 text-right">
-                            {product.retailPrice > 0 ? `¥${product.retailPrice.toLocaleString()}` : '-'}
-                          </td>
-                        )}
-                      </tr>
-                    ))}
-                    {Array.from({ length: Math.max(0, 18 - selected.length) }).map((_, i) => (
-                      <tr key={`empty-${i}`}>
-                        <td className="border border-gray-400 px-2 py-1">&nbsp;</td>
-                        <td className="border border-gray-400 px-2 py-1">&nbsp;</td>
-                        <td className="border border-gray-400 px-2 py-1">&nbsp;</td>
-                        <td className="border border-gray-400 px-2 py-1">&nbsp;</td>
-                        <td className="border border-gray-400 px-2 py-1">&nbsp;</td>
-                        <td className="border border-gray-400 px-2 py-1">&nbsp;</td>
-                        {estimateData.showRetailPrice && (
-                          <td className="border border-gray-400 px-2 py-1">&nbsp;</td>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                {/* カテゴリごとにテーブルを表示 */}
+                {Object.entries(
+                  selected.reduce((groups, item) => {
+                    const category = item.product.category || 'その他';
+                    if (!groups[category]) groups[category] = [];
+                    groups[category].push(item);
+                    return groups;
+                  }, {})
+                ).map(([category, items]) => {
+                  const columns = categoryColumns[category] || categoryColumns['ビール']; // デフォルトはビール
+                  const visibleColumns = columns.filter(col => 
+                    !col.showRetail || (col.showRetail && estimateData.showRetailPrice)
+                  );
+
+                  return (
+                    <div key={category} className="mb-6">
+                      <h3 className="text-lg font-bold mb-2 px-2 py-1 bg-gray-100 border-l-4 border-blue-600">
+                        【{category}】
+                      </h3>
+                      <table className="w-full border-collapse border-2 border-gray-800 mb-3">
+                        <thead className="bg-gray-900 text-white">
+                          <tr>
+                            {visibleColumns.map(col => (
+                              <th key={col.key} className="border border-gray-600 px-2 py-1 text-left">
+                                {col.label}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {items.map(({ product, quantity }) => (
+                            <tr key={product.id}>
+                              {visibleColumns.map(col => (
+                                <td key={col.key} className="border border-gray-400 px-2 py-1">
+                                  {col.getValue(product, estimateData.tradeType, estimateData.showRetailPrice, quantity)}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                })}
 
                 <div className="flex justify-end mb-4">
                   <div className="w-80">
@@ -715,6 +777,11 @@
                       </div>
                     )}
                     <div className="flex justify-between font-bold py-3 text-lg border-t-2 border-gray-800">
+                      <span>合計</span>
+                      <span>¥{totals.total.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
                       <span>合計</span>
                       <span>¥{totals.total.toLocaleString()}</span>
                     </div>
