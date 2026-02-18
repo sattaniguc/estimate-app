@@ -12,16 +12,15 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const token = process.env.NOTION_TOKEN || req.body.token;
-    const { productDbId } = req.body;
+    const token = process.env.NOTION_TOKEN || req.body?.token;
+    const { productDbId } = req.body || {};
 
     if (!token || !productDbId) {
-      return res.status(400).json({ error: '必須パラメータが不足しています' });
+      return res.status(400).json({ error: 'Missing required parameters' });
     }
 
     const notion = new Client({ auth: token });
 
-    // 商品マスタを取得
     const response = await notion.databases.query({
       database_id: productDbId
     });
@@ -35,22 +34,24 @@ module.exports = async (req, res) => {
         category: props['カテゴリ']?.select?.name || '',
         priceWholesale: props['納品価格(帳合)']?.number || props['納品価格（帳合）']?.number || 0,
         priceDirect: props['納品価格(直接)']?.number || props['納品価格（直接）']?.number || 0,
+        price: props['希望小売価格']?.number || 0,
         retailPrice: props['希望小売価格']?.number || 0,
         taxRate: props['消費税率']?.select?.name || '10%',
         expiryDate: props['賞味期限']?.rich_text?.[0]?.text?.content || '',
         janCode: props['JANコード']?.number?.toString() || 
                  props['JANコード']?.rich_text?.[0]?.text?.content || '',
         containerType: props['容器/形態']?.select?.name || '',
-        storageMethod: props['保存方法']?.select?.name || ''
+        storageMethod: props['保存方法']?.select?.name || '',
+        // 新しいプロパティ（既存プロパティ名を使用）
+        abv: props['ABV（％）']?.number || '',
+        specification: props['規格/内容量']?.rich_text?.[0]?.text?.content || '',
+        blockWeight: props['ブロック重量']?.rich_text?.[0]?.text?.content || '',
+        yieldRate: props['歩留率']?.number || '',
+        deliveryUnit: props['納品単位（最小）']?.rich_text?.[0]?.text?.content || ''
       };
     });
 
-    console.log(`商品データ取得成功: ${products.length}件`);
-
-    res.status(200).json({ 
-      success: true,
-      products
-    });
+    res.status(200).json({ products });
 
   } catch (error) {
     console.error('Products API Error:', error);
