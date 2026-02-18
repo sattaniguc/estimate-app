@@ -77,7 +77,13 @@ module.exports = async (req, res) => {
         janCode: props['JANコード']?.number?.toString() || 
                  props['JANコード']?.rich_text?.[0]?.text?.content || '',
         containerType: props['容器/形態']?.select?.name || '',
-        storageMethod: props['保存方法']?.select?.name || ''
+        storageMethod: props['保存方法']?.select?.name || '',
+        // 新しいプロパティ（既存プロパティ名を使用）
+        abv: props['ABV（％）']?.number || '',
+        specification: props['規格/内容量']?.rich_text?.[0]?.text?.content || '',
+        blockWeight: props['ブロック重量']?.rich_text?.[0]?.text?.content || '',
+        yieldRate: props['歩留率']?.number || '',
+        deliveryUnit: props['納品単位（最小）']?.rich_text?.[0]?.text?.content || ''
       };
     });
 
