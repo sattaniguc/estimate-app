@@ -140,64 +140,77 @@
       // カテゴリごとの表示列定義
       const categoryColumns = {
         'ビール': [
-          { key: 'name', label: '商品名', getValue: (p) => p.name },
-          { key: 'containerType', label: '容器', getValue: (p) => p.containerType || '-' },
+          { key: 'name', label: '商品名', getValue: (p) => p.name, align: 'left' },
+          { key: 'containerType', label: '容器', getValue: (p) => p.containerType || '-', align: 'center' },
           { key: 'unitPrice', label: '単価', getValue: (p, tradeType, showRetail) => {
             const price = tradeType === '帳合' ? p.priceWholesale : p.priceDirect;
             return `¥${price?.toLocaleString() || 0}`;
-          }},
-          { key: 'retailPrice', label: '希望小売価格', getValue: (p) => p.price ? `¥${p.price.toLocaleString()}` : '-', showRetail: true },
-          { key: 'quantity', label: '数量', getValue: (p, tradeType, showRetail, qty) => qty },
+          }, align: 'center'},
+          { key: 'retailPrice', label: '希望小売価格', getValue: (p) => p.price ? `¥${p.price.toLocaleString()}` : '-', showRetail: true, align: 'center' },
+          { key: 'quantity', label: '数量', getValue: (p, tradeType, showRetail, qty) => qty, align: 'center' },
           { key: 'subtotal', label: '小計', getValue: (p, tradeType, showRetail, qty) => {
             const price = tradeType === '帳合' ? p.priceWholesale : p.priceDirect;
             return `¥${((price || 0) * qty).toLocaleString()}`;
-          }}
+          }, align: 'center'},
+          { key: 'janCode', label: 'JANコード', getValue: (p) => p.janCode || '-', align: 'center' }
         ],
         'ソーセージ': [
-          { key: 'name', label: '品名', getValue: (p) => p.name },
-          { key: 'storageMethod', label: '保存方法', getValue: (p) => p.storageMethod || '-' },
+          { key: 'name', label: '品名', getValue: (p) => p.name, align: 'left' },
+          { key: 'storageMethod', label: '保存方法', getValue: (p) => p.storageMethod || '-', align: 'center' },
           { key: 'unitPrice', label: '単価', getValue: (p, tradeType) => {
             const price = tradeType === '帳合' ? p.priceWholesale : p.priceDirect;
             return `¥${price?.toLocaleString() || 0}`;
-          }},
-          { key: 'quantity', label: '数量', getValue: (p, tradeType, showRetail, qty) => qty },
+          }, align: 'center'},
+          { key: 'quantity', label: '数量', getValue: (p, tradeType, showRetail, qty) => qty, align: 'center' },
           { key: 'subtotal', label: '小計', getValue: (p, tradeType, showRetail, qty) => {
             const price = tradeType === '帳合' ? p.priceWholesale : p.priceDirect;
             return `¥${((price || 0) * qty).toLocaleString()}`;
-          }}
+          }, align: 'center'},
+          { key: 'janCode', label: 'JANコード', getValue: (p) => p.janCode || '-', align: 'center' }
         ],
         'ビーフ': [
-          { key: 'name', label: '品名', getValue: (p) => p.name },
+          { key: 'name', label: '品名', getValue: (p) => p.name, align: 'left' },
           { key: 'pricePerKg', label: '単価/㎏', getValue: (p, tradeType) => {
             const price = tradeType === '帳合' ? p.priceWholesale : p.priceDirect;
             return `¥${price?.toLocaleString() || 0}`;
-          }},
-          { key: 'blockWeight', label: 'ブロック重量', getValue: (p) => p.blockWeight ? `${p.blockWeight}㎏` : '-' },
-          { key: 'yieldRate', label: '歩留率', getValue: (p) => p.yieldRate ? `${p.yieldRate}%` : '-' }
+          }, align: 'center'},
+          { key: 'blockWeight', label: 'ブロック重量', getValue: (p) => p.blockWeight ? `${p.blockWeight}㎏` : '-', align: 'center' },
+          { key: 'yieldRate', label: '歩留率', getValue: (p) => {
+            if (!p.yieldRate) return '-';
+            // Notionのパーセント形式（0～1）を検知して100倍
+            const rate = p.yieldRate < 1 ? p.yieldRate * 100 : p.yieldRate;
+            return `${rate}%`;
+          }, align: 'center'}
         ],
         '乳製品': [
-          { key: 'name', label: '品名', getValue: (p) => p.name },
-          { key: 'lotSize', label: '1ロット', getValue: (p) => p.deliveryUnit || '-' },
+          { key: 'name', label: '品名', getValue: (p) => p.name, align: 'left' },
+          { key: 'lotSize', label: '1ロット', getValue: (p) => p.deliveryUnit || '-', align: 'center' },
           { key: 'unitPrice', label: '単価', getValue: (p, tradeType) => {
             const price = tradeType === '帳合' ? p.priceWholesale : p.priceDirect;
             return `¥${price?.toLocaleString() || 0}`;
-          }},
+          }, align: 'center'},
           { key: 'amount', label: '金額', getValue: (p, tradeType, showRetail, qty) => {
             const price = tradeType === '帳合' ? p.priceWholesale : p.priceDirect;
             return `¥${((price || 0) * qty).toLocaleString()}`;
-          }},
-          { key: 'expiryDate', label: '賞味期限', getValue: (p) => p.expiryDate || '-' }
+          }, align: 'center'},
+          { key: 'expiryDate', label: '賞味期限', getValue: (p) => p.expiryDate || '-', align: 'center' },
+          { key: 'janCode', label: 'JANコード', getValue: (p) => p.janCode || '-', align: 'center' }
         ],
         '焼酎': [
-          { key: 'name', label: '商品名', getValue: (p) => p.name },
-          { key: 'alcoholContent', label: 'アルコール度数', getValue: (p) => p.abv ? `${p.abv}%` : '-' },
-          { key: 'volume', label: '容量', getValue: (p) => p.specification || '-' },
+          { key: 'name', label: '商品名', getValue: (p) => p.name, align: 'left' },
+          { key: 'alcoholContent', label: 'アルコール度数', getValue: (p) => {
+            if (!p.abv) return '-';
+            // Notionのパーセント形式（0～1）を検知して100倍
+            const abv = p.abv < 1 ? p.abv * 100 : p.abv;
+            return `${abv}%`;
+          }, align: 'center'},
+          { key: 'volume', label: '容量', getValue: (p) => p.specification || '-', align: 'center' },
           { key: 'unitPrice', label: '単価', getValue: (p, tradeType) => {
             const price = tradeType === '帳合' ? p.priceWholesale : p.priceDirect;
             return `¥${price?.toLocaleString() || 0}`;
-          }},
-          { key: 'retailPrice', label: '希望小売価格', getValue: (p) => p.price ? `¥${p.price.toLocaleString()}` : '-', showRetail: true },
-          { key: 'janCode', label: 'JANコード', getValue: (p) => p.janCode || '-' }
+          }, align: 'center'},
+          { key: 'retailPrice', label: '希望小売価格', getValue: (p) => p.price ? `¥${p.price.toLocaleString()}` : '-', showRetail: true, align: 'center' },
+          { key: 'janCode', label: 'JANコード', getValue: (p) => p.janCode || '-', align: 'center' }
         ]
       };
 
@@ -784,7 +797,7 @@
                         <thead className="bg-gray-900 text-white">
                           <tr>
                             {visibleColumns.map(col => (
-                              <th key={col.key} className="border border-gray-600 px-2 py-1 text-left">
+                              <th key={col.key} className="border border-gray-600 px-2 py-1 text-center">
                                 {col.label}
                               </th>
                             ))}
@@ -794,7 +807,7 @@
                           {items.map(({ product, quantity }) => (
                             <tr key={product.id}>
                               {visibleColumns.map(col => (
-                                <td key={col.key} className="border border-gray-400 px-2 py-1">
+                                <td key={col.key} className={`border border-gray-400 px-2 py-1 ${col.align === 'left' ? 'text-left' : 'text-center'}`}>
                                   {col.getValue(product, estimateData.tradeType, estimateData.showRetailPrice, quantity)}
                                 </td>
                               ))}
@@ -826,6 +839,11 @@
                       </div>
                     )}
                     <div className="flex justify-between font-bold py-3 text-lg border-t-2 border-gray-800">
+                      <span>合計</span>
+                      <span>¥{totals.total.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
                       <span>合計</span>
                       <span>¥{totals.total.toLocaleString()}</span>
                     </div>
